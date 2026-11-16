@@ -1,0 +1,8 @@
+{
+  "claudeMdExcludes": [
+    "**/.claude/rules/code-docs/**",
+    "**/.claude/rules/powershell-quality/**",
+    "**/.claude/rules/shell-quality/**",
+    "**/.claude/rules/docs-quality/**"
+  ]
+}

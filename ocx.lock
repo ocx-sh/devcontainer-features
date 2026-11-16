@@ -1,0 +1,47 @@
+[metadata]
+lock_version = 4
+declaration_hash_version = 1
+declaration_hash = "sha256:584e5c5edbee83c49826643b492549e8a1cd0b20836203fb4c1050233a5bdc91"
+generated_by = "ocx 0.6.8"
+generated_at = "2026-11-16T22:15:38Z"
+
+[[tool]]
+name = "node"
+group = "default"
+repository = "ocx.sh/nodejs/node"
+declared = "ocx.sh/nodejs/node:26"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:8a534db4550530e02d65489961f76d639ccaae8d970c32971e7b3e6e661860c1"
+"darwin/arm64" = "sha256:600fe164a2ab61efbb6e5290708bd66834eeec6a0cf9f1a6f0035ce94d5708af"
+"linux/amd64+libc.glibc" = "sha256:4b98f0f9b88579f25141b7de0f408f7e98dc23a60f38e5f9700025e186aace48"
+"linux/arm64+libc.glibc" = "sha256:9617579dba3555c0da67cf94909a3ef543963d0226afecfbf7df4be153044bcf"
+"windows/amd64" = "sha256:37442d67b42c8ff9658ea235dfa4ec372af8c0d7d59b16f9f5799a85d6f6ad8f"
+"windows/arm64" = "sha256:dedb7b1724dc939a19eb3cfdf40fbd694cad894302b94b4ec9e135ed4106d52c"
+
+[[tool]]
+name = "shellcheck"
+group = "default"
+repository = "ocx.sh/shellcheck/shellcheck"
+declared = "ocx.sh/shellcheck/shellcheck:0.11"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:3f609d1f8981b9b62804a788fc78c90ec7e8fac8d6a24b5e76b18be14964e08a"
+"darwin/arm64" = "sha256:e1dd86d5905f3979d8de0f02b563d53ce051bf5244422a3592a427161d8d75f2"
+"linux/amd64" = "sha256:3981b442fff3f6bf9ae93e4c293e53322ffc9135e0b654620bc800464bdaf379"
+"linux/arm64" = "sha256:57f540d6f5a6f094f7c4e441e2294cb712abb2991d47736f91a56dde2c8025dd"
+"windows/amd64" = "sha256:ed1c498bddcc23a95ff99af7d17fa60f34e9d505d1557a1ba0c49e20d6d1d26f"
+
+[[tool]]
+name = "task"
+group = "default"
+repository = "ocx.sh/go-task/task"
+declared = "ocx.sh/go-task/task:3"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:7e841de3b6787ba13e3265984782ae695031f3821fe328d21df7c979fbe061ca"
+"darwin/arm64" = "sha256:b12612c4c31f122bcb671f010c5213978ca9c50509d8989139238808ca0838a8"
+"linux/amd64" = "sha256:4a7497c53a1457df838b5b00708e6c60c5bdfb27f406e2d7f8a15e12f13a3031"
+"linux/arm64" = "sha256:6608d11c80aff37c102be66cb3f5e0dcefa2a457faca0f78b316634063f02a0b"
+"windows/amd64" = "sha256:627ff007505718bf09a78cc70f66f9bc9e6efc798e17fdde660899801c4899c2"
+"windows/arm64" = "sha256:3146e36c163498c561ef78f637899282a8884896dc25861fc0797a1bfed882f9"
