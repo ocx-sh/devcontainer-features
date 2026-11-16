@@ -1,0 +1,176 @@
+# Overlays and disclosure
+
+You loaded this file because a page needs a dialog, a menu, a popup, or
+content that opens and closes. Import path prefix: `@ocx-sh/theme/components/`.
+
+Contents: [Dialogs](#dialogs) · [Panels and menus](#panels-and-menus) ·
+[Tooltip and Hint](#tooltip-and-hint) · [Disclosure](#disclosure) · [Tabs](#tabs)
+
+## Dialogs
+
+All dialogs run on Zag: focus trap (when modal), scroll lock, Escape,
+outside click and focus return come with them.
+
+**`ui/Dialog.astro`**: `title` (required, the accessible name), `description`
+(linked as the accessible description), `open` (renders open and starts
+eagerly), `modal` (default true), `id`. Slot `trigger` holds the opener
+text; slot `icon` sits in the header; the default slot is the body. Without
+a `trigger` slot the dialog waits for `ocx:dialog:open`. Event
+`ocx:dialog:change` `{ open }`.
+
+```astro
+<Dialog title="Remove package?">
+  <span slot="trigger">Remove…</span>
+  The lock file keeps its entry until you run `ocx lock`.
+</Dialog>
+```
+
+**`ui/ConfirmDialog.astro`** and **`ui/AlertDialog.astro`** are presets with
+no trigger slot. Place one once, open it by event, read the answer back:
+
+```js
+document.dispatchEvent(new CustomEvent('ocx:dialog:open', { detail: { id: 'remove-confirm' } }));
+document.addEventListener('ocx:dialog-result', (e) => {
+  if (e.detail.id === 'remove-confirm' && e.detail.value === 'confirm') remove();
+});
+```
+
+| Preset | Props | `value` in `ocx:dialog-result` |
+|---|---|---|
+| `ConfirmDialog` | `id`, `title` (required), `message`, `confirmLabel`, `cancelLabel` | `confirm`, `cancel`, `dismiss` |
+| `AlertDialog` | `id`, `title` (required), `message`, `tone` `info`/`success`/`warning`/`error`, `acknowledgeLabel` | `ok`, `dismiss` |
+
+No danger variant exists for the confirm button; state the consequence in
+`message`.
+
+**`ui/CommandPalette.astro`**: a header search trigger plus a modal "Search"
+dialog (Dialog's machine, palette layout) holding a combobox over grouped link
+results. The component renders the shell; call `mountCommandPalette(root, { source })`
+from `@ocx-sh/theme/command-palette` in a page script (explicit mounting is the intended API; nothing mounts it for you). `source` is a dynamic
+`import()` of your module, which exports `search(query, signal)` returning
+`[{ label, items: [{ href, label, description? }] }]` and optionally `warm()`.
+Nothing loads before input but the key and click listeners: the open/close
+bookkeeping, the dialog machine and your module load on the first open, and a chord
+pressed meanwhile is swallowed at once and opens the palette when the chunk arrives. Props (all text): `label`, `triggerLabel` (visible and accessible name of
+the trigger), `placeholder`, `description` (visually hidden), `hint` (empty-query
+guidance), `noResults` (`{query}`), `count` (`{count}`), `error`, `resultsLabel`,
+`closeLabel`, `id`, `zag`. Ctrl/Cmd+K toggles (markup says `aria-keyshortcuts="Control+K"`, mount sets `Meta+K` on a mac); `/` opens unless
+`slash: false` (or a function answering false) because the page claims `/`.
+Rows are real `<a href>` links drawn with `textContent`; non-http(s) hrefs are
+dropped. Event `ocx:dialog:change` `{ open }`. The card's size and place are tokens: `--ocx-palette-width`, `--ocx-palette-height`, `--ocx-palette-top` (override them in `:root`).
+
+```astro
+<CommandPalette triggerLabel="Search packages" hint="Search by name or keyword." />
+<script>
+  import { mountCommandPalette } from '@ocx-sh/theme/command-palette';
+  const root = document.querySelector<HTMLElement>('.ocx-cmdpalette');
+  if (root) mountCommandPalette(root, { source: () => import('./search.js') });
+</script>
+```
+
+**`ui/Drawer.astro`**: Dialog's contract plus swipe to close. `title`
+(required), `description`, `open`, `modal`, `side` `start`, `end` or
+`bottom`. Slot `trigger`. Event `ocx:drawer:change`.
+
+## Panels and menus
+
+**`ui/Popover.astro`**: a non-modal panel from slot `trigger`; default slot
+is the panel. `placement` (default `bottom-start`), `modal` (traps focus).
+Event `ocx:popover:change`. `src` fills the panel from a same-origin HTML
+fragment instead of the default slot: fetched on the first open only (never
+before, no prefetch), Loader while loading, error text plus Retry on failure,
+cached by URL after the first load, a request that takes over 10 s counts as failed; `labels` (`{ loading?, error?, retry? }`)
+sets the texts. Event `ocx:popover:fill` `{ ok }` after each attempt, to
+enhance the fragment. The fragment is inserted as markup: only your own build's
+HTML, never user content.
+
+**`ui/Menu.astro`**: a trigger plus a native-popover panel of **links**
+(disclosure navigation, Tab order, no ARIA menu). `label` (required, trigger
+text and panel name), `items` (`{ label, href, current?, icon? }`), `align`
+`start`/`end`.
+
+**`ui/ActionMenu.astro`**: a list of **commands** (APG menu: arrows,
+Home/End, typeahead). `label` (required), `items`
+(`{ value, label, disabled?, icon? }`), `placement`, `context` (the default
+slot becomes the target: right-click or long-press opens the menu at the
+pointer). Events `ocx:menu:select` `{ value }`, `ocx:menu:change`.
+
+## Tooltip and Hint
+
+| | `Tooltip.astro` | `ui/Hint.astro` |
+|---|---|---|
+| For | A term inside running text | An icon-only button |
+| Markup | Phrasing content, nests inside `<p>` | Wraps exactly one button |
+| Props | `term` (required, the underlined text), `side`, `delayDuration` | `label` (required), `openDelay`, `placement` |
+| Content | Default slot: the definition (may hold links and code) | `label` only, short |
+| Engine | Popover API and CSS anchor positioning, no Zag | Zag tooltip |
+
+```mdx
+Pinned by <Tooltip term="OCI digest">A SHA-256 content fingerprint.</Tooltip>, not by ranges.
+
+<Hint label="copy command"><Button iconOnly aria-label="Copy command"><Icon name="copy" /></Button></Hint>
+```
+
+The Hint is a description; the button keeps its own `aria-label`. `src` on a
+Hint fetches plain text on the first show (never before), caches it by URL and
+replaces `label`, which stays when the fetch fails; event `ocx:hint:fill`
+`{ ok }`. Rich fetched content belongs in a `Popover`, not a Hint.
+
+### Glossary terms
+
+A site that defines the same words on many pages does not write a `Tooltip` per use: it sets the `glossary`
+plugin option (`ocx-theme-setup`, section "Glossary") and the theme links the terms.
+
+- **Authoring rule: write plain prose; never hand-link a term.** The plugin matches the glossary's `variants` in the
+  text of every page, so a hand-written link or `<Tooltip>` for a glossary term is a second, competing mechanism.
+- One usage is one element, `<a class="ocx-term" href="<glossary page>#<id>">text</a>`, with no data attribute and no
+  `title`. The definition is not in the page: `term-tip.mjs` loads on the first hover or focus of a term, fetches
+  `<base>glossary.json` (`{id: [term, definition]}`) once and fills one shared popup (`role="tooltip"`,
+  `popover="manual"`, CSS anchor positioning).
+- Behaviour (WCAG 1.4.13): focus opens at once, hover after 400 ms; the pointer may move onto the popup; Escape closes it
+  and focus stays on the term; blur and pointer leave close it (a focused term keeps it); a scroll closes a hover-opened
+  one; one popup at a time; `aria-describedby` is on the open term only. Without script, or when the fetch fails, a
+  term is the plain link.
+- Never linked: headings, link text, alt text, inline code, code, raw HTML, an aside's title, a component's attributes
+  (`<Node name="entrypoints/">`) and the content of any component except `Steps`, `Tabs`, `TabItem`, `Aside`, `details`.
+- On a Starlight page the theme's `MarkdownContent` inlines the link style once when the page has a term link, and the
+  every-page script (`chrome.mjs`) loads the popup on the first touch of a term: a term page ships no script of its own.
+  `TermStyle.astro` is the same style plus its own loader for a chromeless page (a story canvas renders `<TermStyle />`).
+
+## Disclosure
+
+**`Accordion.astro`** with **`AccordionItem.astro`** children:
+
+| Prop | Notes |
+|---|---|
+| `Accordion` `multiple` | Several items open at once |
+| `Accordion` `collapsible` | Default true: the open item closes when selected again. `false` keeps one open |
+| `Accordion` `value` | Values of the items open on first paint |
+| `AccordionItem` `value` | Required, unique, slug-like (it becomes part of the element ids) |
+| `AccordionItem` `label` | Required, the trigger text |
+
+Event `ocx:accordion:change`.
+
+**`Collapsible.astro`**: `label` or a `trigger` slot (one is required),
+`open`, `disabled`. Event `ocx:collapsible:change`.
+
+## Tabs
+
+**`Tabs.astro`** with **`TabItem.astro`** children, API-compatible with
+Starlight's tabs. `Tabs` `syncKey`: groups sharing the key switch together
+and the choice persists across pages (restored before paint, no flash).
+`TabItem` `label` (required; synced groups match on it) and `icon`, one of
+`shell`, `powershell`, `nushell`, `fish`, `elvish`, `cmd`. Slot `action`:
+a control at the end of the tab row, outside the tablist (a `Link`). Event
+`ocx:tabs:change`. All panels share one grid cell: the area is as tall as
+the tallest panel from first paint, and a switch crossfades the two panels
+(the inactive one is `visibility: hidden`, so the height never changes). A
+panel that is a lone code frame or command bar switches instantly instead: no
+transition, the frame stays opaque.
+
+```mdx
+<Tabs syncKey="shell">
+  <TabItem label="sh" icon="shell">`echo "$HOME"`</TabItem>
+  <TabItem label="PowerShell" icon="powershell">`echo $env:USERPROFILE`</TabItem>
+</Tabs>
+```

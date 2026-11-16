@@ -3,9 +3,9 @@ agent = []
 [metadata]
 lock_version = 1
 declaration_hash_version = 1
-declaration_hash = "sha256:a18d08112aae7825c227e431a77121f10a17c310b0acae7c81b108d8bee159d4"
-generated_by = "grim 0.15.1"
-generated_at = "2026-11-16T22:42:08Z"
+declaration_hash = "sha256:897f8c3d7121aba2c56bd360bf856f2c21666a5f18e4fef3ed63f363e1b258c2"
+generated_by = "grim 0.14.3"
+generated_at = "2026-11-16T23:41:20Z"
 
 [[skill]]
 name = "code-docs-cleanup"
@@ -17,6 +17,10 @@ tag = "latest"
 
 [[skill.bundles]]
 repo = "ghcr.io/ocx-sh/lore/shell-essentials"
+tag = "latest"
+
+[[skill.bundles]]
+repo = "ghcr.io/ocx-sh/lore/typescript-essentials"
 tag = "latest"
 
 [[skill]]
@@ -41,6 +45,42 @@ bundle_tag = "latest"
 name = "installer-script"
 pinned = "ghcr.io/ocx-sh/lore/installer-script@sha256:916d113c1d8abfae9c2809b47a2a6c55cf82b2b26a80c4a16757a9ab14589e72"
 bundle = "ghcr.io/ocx-sh/lore/shell-essentials"
+bundle_tag = "latest"
+
+[[skill]]
+name = "ocx-theme-components"
+pinned = "ghcr.io/ocx-sh/lore/ocx-theme-components@sha256:8ccfc628b42d304ee29e0bf0d86afc9ba334ae7709b7d8392593ad348770a6eb"
+bundle = "ghcr.io/ocx-sh/lore/ocx-theme"
+bundle_tag = "latest"
+
+[[skill]]
+name = "ocx-theme-deploy"
+pinned = "ghcr.io/ocx-sh/lore/ocx-theme-deploy@sha256:1051ff3037e1c8a7022a9b6efcb7678cd25622355babc65cc00ab7dce4a3dbf1"
+bundle = "ghcr.io/ocx-sh/lore/ocx-theme"
+bundle_tag = "latest"
+
+[[skill]]
+name = "ocx-theme-icons"
+pinned = "ghcr.io/ocx-sh/lore/ocx-theme-icons@sha256:0542d7ff70af0e89037e2fc6e097daee20c0e378fb6b7adab620d40e4598963a"
+bundle = "ghcr.io/ocx-sh/lore/ocx-theme"
+bundle_tag = "latest"
+
+[[skill]]
+name = "ocx-theme-quality"
+pinned = "ghcr.io/ocx-sh/lore/ocx-theme-quality@sha256:90a6f25174f0d1ad0a1273909c7a5de7b7e24a7c7e5811bcce70fc0467441129"
+bundle = "ghcr.io/ocx-sh/lore/ocx-theme"
+bundle_tag = "latest"
+
+[[skill]]
+name = "ocx-theme-setup"
+pinned = "ghcr.io/ocx-sh/lore/ocx-theme-setup@sha256:db1b613d2fd26cb9af73504de39452b89b4befe53d5aa25ebb622e6a0157351a"
+bundle = "ghcr.io/ocx-sh/lore/ocx-theme"
+bundle_tag = "latest"
+
+[[skill]]
+name = "ocx-theme-theming"
+pinned = "ghcr.io/ocx-sh/lore/ocx-theme-theming@sha256:b855db229e8cdf560cb7f3fb156f8105be6c54e1c0f6884d4310ba919052bbf5"
+bundle = "ghcr.io/ocx-sh/lore/ocx-theme"
 bundle_tag = "latest"
 
 [[skill]]
@@ -73,6 +113,10 @@ tag = "latest"
 repo = "ghcr.io/ocx-sh/lore/shell-essentials"
 tag = "latest"
 
+[[rule.bundles]]
+repo = "ghcr.io/ocx-sh/lore/typescript-essentials"
+tag = "latest"
+
 [[rule]]
 name = "docs-quality"
 pinned = "ghcr.io/ocx-sh/lore/docs-quality@sha256:065355e0be2ce30d340c71b57bb10c5360a954a166023199535cedee56cee96c"
@@ -89,6 +133,18 @@ bundle_tag = "latest"
 name = "shell-quality"
 pinned = "ghcr.io/ocx-sh/lore/shell-quality@sha256:737adb8dfab155b1569aec93c709fea413c07af612ec0976e1e1d3aada95cef7"
 bundle = "ghcr.io/ocx-sh/lore/shell-essentials"
+bundle_tag = "latest"
+
+[[rule]]
+name = "typescript-packaging"
+pinned = "ghcr.io/ocx-sh/lore/typescript-packaging@sha256:bb84da4598396e188bb370f191832cc5f988214303f0a1a6c5c18ed9d1bee7de"
+bundle = "ghcr.io/ocx-sh/lore/typescript-essentials"
+bundle_tag = "latest"
+
+[[rule]]
+name = "typescript-quality"
+pinned = "ghcr.io/ocx-sh/lore/typescript-quality@sha256:5df437c8dad6758409deac39b87c1f0c6f7846ee28e8be47ba9d7cbc696427aa"
+bundle = "ghcr.io/ocx-sh/lore/typescript-essentials"
 bundle_tag = "latest"
 
 [[bundle]]
@@ -132,6 +188,42 @@ id = "ghcr.io/ocx-sh/lore/docs-review:latest"
 kind = "rule"
 name = "docs-quality"
 id = "ghcr.io/ocx-sh/lore/docs-quality:latest"
+
+[[bundle]]
+name = "ocx-theme"
+repo = "ghcr.io/ocx-sh/lore/ocx-theme"
+tag = "latest"
+pinned = "ghcr.io/ocx-sh/lore/ocx-theme@sha256:bd37f3aeed105e12514f10d110aa0050ac6ae392539163c074c414a4947cc11d"
+
+[[bundle.member]]
+kind = "skill"
+name = "ocx-theme-components"
+id = "ghcr.io/ocx-sh/lore/ocx-theme-components:latest"
+
+[[bundle.member]]
+kind = "skill"
+name = "ocx-theme-deploy"
+id = "ghcr.io/ocx-sh/lore/ocx-theme-deploy:latest"
+
+[[bundle.member]]
+kind = "skill"
+name = "ocx-theme-icons"
+id = "ghcr.io/ocx-sh/lore/ocx-theme-icons:latest"
+
+[[bundle.member]]
+kind = "skill"
+name = "ocx-theme-quality"
+id = "ghcr.io/ocx-sh/lore/ocx-theme-quality:latest"
+
+[[bundle.member]]
+kind = "skill"
+name = "ocx-theme-setup"
+id = "ghcr.io/ocx-sh/lore/ocx-theme-setup:latest"
+
+[[bundle.member]]
+kind = "skill"
+name = "ocx-theme-theming"
+id = "ghcr.io/ocx-sh/lore/ocx-theme-theming:latest"
 
 [[bundle]]
 name = "shell-essentials"
@@ -178,3 +270,29 @@ id = "ghcr.io/ocx-sh/lore/powershell-quality:latest"
 kind = "rule"
 name = "shell-quality"
 id = "ghcr.io/ocx-sh/lore/shell-quality:latest"
+
+[[bundle]]
+name = "typescript-essentials"
+repo = "ghcr.io/ocx-sh/lore/typescript-essentials"
+tag = "latest"
+pinned = "ghcr.io/ocx-sh/lore/typescript-essentials@sha256:e0446fdfa48ee779e3d3a31c74efdcebf1f557f91c7f1939d548fdf3d0e6c9b4"
+
+[[bundle.member]]
+kind = "skill"
+name = "code-docs-cleanup"
+id = "ghcr.io/ocx-sh/lore/code-docs-cleanup:latest"
+
+[[bundle.member]]
+kind = "rule"
+name = "code-docs"
+id = "ghcr.io/ocx-sh/lore/code-docs:latest"
+
+[[bundle.member]]
+kind = "rule"
+name = "typescript-packaging"
+id = "ghcr.io/ocx-sh/lore/typescript-packaging:latest"
+
+[[bundle.member]]
+kind = "rule"
+name = "typescript-quality"
+id = "ghcr.io/ocx-sh/lore/typescript-quality:latest"
