@@ -19,9 +19,6 @@ site:
     dir: site
     dist: site/dist
     path: /integrations/devcontainer
-    paths:
-    - src/**
-    - test/**
 submodules: false
 theme_bundle: true
 zizmor_ignore: []

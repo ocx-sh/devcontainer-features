@@ -10,8 +10,6 @@ on:
       - "site/**"
       - ocx.toml
       - ocx.lock
-      - "src/**"
-      - "test/**"
   workflow_dispatch:
 
 permissions: {}
