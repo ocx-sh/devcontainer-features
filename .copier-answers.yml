@@ -1,0 +1,27 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v0.3.5
+_src_path: https://github.com/ocx-sh/conventions.git
+bazel: false
+deep_os:
+- ubuntu-latest
+- ubuntu-24.04-arm
+languages:
+- shell
+- typescript
+maintainers:
+- michael-herwig
+profile: full
+repo_name: devcontainer-features
+repo_owner: ocx-sh
+repo_workflows: false
+site:
+    deploy: true
+    dir: site
+    dist: site/dist
+    path: /integrations/devcontainer
+    paths:
+    - src/**
+    - test/**
+submodules: false
+theme_bundle: true
+zizmor_ignore: []
