@@ -1,0 +1,48 @@
+# ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
+name: Deploy to ocx.sh
+
+# Publishes the site on push to main that touches the site, plus a manual dispatch. No pull_request trigger: PR
+# previews stay as they are, and the `ocx.sh` environment admits main only.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ocx.toml
+      - ocx.lock
+      - "src/**"
+      - "test/**"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: ocx.sh
+      url: ${{ steps.deploy.outputs.url }}
+    concurrency:
+      group: deploy-site
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup
+        uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
+        with:
+          groups: default,docs
+      - name: Build the site
+        run: task ci:docs
+      - name: Deploy
+        id: deploy
+        uses: ocx-sh/website/.github/actions/deploy@e86b83014538975c186912e5038567c69b2f2f2c # v0.3.0
+        with:
+          dist: "site/dist"
+          path: "/integrations/devcontainer/"
+          storage-key: ${{ secrets.BUNNY_STORAGE_KEY }}
