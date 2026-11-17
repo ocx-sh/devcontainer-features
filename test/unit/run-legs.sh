@@ -39,12 +39,16 @@ for leg in $legs; do
         cov_ran=1
     fi
     bats_rc=0
-    OCXF_TEST_SH=$leg OCXF_COV_LOG=$cov node_modules/bats/bin/bats --formatter tap \
+    : >"$tmp/demoted"
+    OCXF_DEMOTED_LOG=$tmp/demoted OCXF_TEST_SH=$leg OCXF_COV_LOG=$cov node_modules/bats/bin/bats --formatter tap \
         --report-formatter junit --output "$tmp/rep" "$file" >"$tmp/tap" 2>&1 || bats_rc=$?
     [ -f "$tmp/rep/report.xml" ] && cp "$tmp/rep/report.xml" "$out/unit-$name.xml"
     total=$(sed -n 's/^1\.\.//p' "$tmp/tap")
     fails=$(grep -c '^not ok' "$tmp/tap" || true)
     printf '%s: %s tests, %s failures\n' "$name" "${total:-0}" "$fails"
+    # busybox applets beat PATH stubs, so install.bats runs those tests on dash (no_applets); say so.
+    demoted=$(sort -u "$tmp/demoted" | wc -l)
+    [ "$demoted" -eq 0 ] || printf '%s: %s tests ran on dash instead (stubbed names busybox applets override)\n' "$name" "$demoted"
     if [ "$bats_rc" -ne 0 ]; then
         grep -v '^ok' "$tmp/tap" >&2 || true
         rc=1

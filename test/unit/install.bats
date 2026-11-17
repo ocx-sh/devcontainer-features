@@ -8,8 +8,18 @@ load helpers
 
 INSTALL="$REPO_ROOT/src/ocx/install.sh"
 V=0.6.8
-MUSL=x86_64-unknown-linux-musl
-GNU=x86_64-unknown-linux-gnu
+# The suite must pass on any host: unpinned tests see the real machine (busybox sh runs its own uname
+# applet, so the uname stub cannot override it there), hence MUSL and GNU follow the host and the
+# manifest carries both architectures.
+case "$(uname -m)" in
+    aarch64 | arm64) HOST_ARCH=aarch64 OTHER_ARCH=x86_64 ;;
+    *) HOST_ARCH=x86_64 OTHER_ARCH=aarch64 ;;
+esac
+export HOST_ARCH
+MUSL=$HOST_ARCH-unknown-linux-musl
+GNU=$HOST_ARCH-unknown-linux-gnu
+OTHER=$OTHER_ARCH-unknown-linux-musl
+X86=x86_64-unknown-linux-musl
 ARM=aarch64-unknown-linux-musl
 
 # --- fixtures ----------------------------------------------------------------
@@ -31,7 +41,7 @@ serve() {
 # mkdist: (re)build the vendored manifest and its digest in the sandbox source dir from fx/arc.
 mkdist() {
     _rows=
-    for _spec in $V:$MUSL $V:$GNU $V:$ARM 0.6.7:$MUSL; do
+    for _spec in $V:$MUSL $V:$GNU $V:$OTHER 0.6.7:$MUSL; do
         _v=${_spec%%:*}
         _t=${_spec#*:}
         _a="$SANDBOX/fx/arc/$_v-$_t.tgz"
@@ -66,10 +76,12 @@ EOF
 }
 
 # no_applets: busybox sh runs its built-in uname, sleep, wget, sha256sum and so on before any PATH
-# stub, so tests that stub those names run on dash when the leg is busybox.
+# stub, so tests that stub those names run on dash when the leg is busybox. Each such test is
+# listed in $OCXF_DEMOTED_LOG so run-legs.sh can report how many did not run under busybox.
 no_applets() {
     case "$OCXF_TEST_SH" in
         busybox*)
+            [ -z "${OCXF_DEMOTED_LOG:-}" ] || printf '%s\n' "$BATS_TEST_NAME" >>"$OCXF_DEMOTED_LOG"
             OCXF_TEST_SH=dash
             # shellcheck disable=SC2034 # read by restrict_path in helpers.bash
             OCXF_TEST_SH_BIN=dash
@@ -105,12 +117,12 @@ setup() {
     OCXF_SRC_DIR="$SANDBOX/src"
     export HOME TMPDIR OCXF_RETRY_DELAY OCXF_SRC_DIR
     cp "$REPO_ROOT/src/ocx/lib.sh" "$REPO_ROOT/src/ocx/devcontainer-feature.json" "$SANDBOX/src/"
-    for _spec in $V:$MUSL $V:$GNU $V:$ARM 0.6.7:$MUSL; do
+    for _spec in $V:$MUSL $V:$GNU $V:$OTHER 0.6.7:$MUSL; do
         fake_archive "${_spec%%:*}" "${_spec#*:}" "${_spec%%:*}" "$SANDBOX/fx/arc/${_spec%%:*}-${_spec#*:}.tgz"
     done
     mkdist
     make_curl "$STUB_DIR/curl"
-    stub uname 'case "$1" in -m) echo "${FAKE_ARCH:-x86_64}" ;; -s) echo "${FAKE_OS:-Linux}" ;; *) echo Linux ;; esac'
+    stub uname 'case "$1" in -m) echo "${FAKE_ARCH:-$HOST_ARCH}" ;; -s) echo "${FAKE_OS:-Linux}" ;; *) echo Linux ;; esac'
     stub getconf 'exit 1'
     root_file /etc/ssl/certs/ca-certificates.crt x
 }
@@ -159,7 +171,7 @@ pm_stubs() {
     assert_success
     run grep -c 'dist.json' "$STUB_LOG"
     assert_output 0
-    run grep -c 'ocx-x86_64-unknown-linux-musl.tar.gz$' "$STUB_LOG"
+    run grep -c "ocx-$MUSL.tar.gz\$" "$STUB_LOG"
     assert_output 1
 }
 
@@ -562,7 +574,7 @@ printf "VERSION=%s\nLIBC=%s\nDISTURL=%s\nMIRRORURL=%s\nCABUNDLE=%s\nMANAGEDCONFI
     no_applets
     FAKE_ARCH=amd64 inst
     assert_success
-    assert_output --partial "($MUSL)"
+    assert_output --partial "($X86)"
 }
 
 @test "unsupported architecture exits 7" {
