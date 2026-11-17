@@ -1,6 +1,8 @@
 ---
 title: Run ocx as root, a named user or a split user
 description: Set the dev container users so that ocx works for the session user and the user's store, lock file and toolchain belong to that user.
+sidebar:
+  order: 3
 ---
 <!-- doc_type: how-to -->
 <!-- doc_tier: everyday -->
@@ -34,7 +36,8 @@ The store is `/root/.ocx`.
 }
 ```
 
-When the workspace files belong to another user, the restore does not run as root.
+When `ocx.lock`, `.ocx` or the project directory belongs to another user, the restore does not run as root.
+The same holds for a project that `OCX_PROJECT` names.
 Otherwise root would take over `ocx.lock` and the toolchain links.
 The container prints this warning and starts.
 
@@ -105,12 +108,13 @@ The [`ocxHome` option](../reference/options.md#opt-ocxHome) sets one `OCX_HOME` 
 
 The feature does not create that directory or change its owner.
 The directory must exist and be writable by every user who runs ocx.
-Otherwise the restore fails with exit code 74, and the hint names file ownership.
+Otherwise the restore fails with exit code 74, and the hint names the `ocxHome` directory.
 
+<!-- doc: user-ocxhome-unwritable -->
 ```console
 ocx-feature: warning: ocx pull failed with exit code 74.
   attempted: /usr/local/bin/ocx pull
-  fix: check file ownership of ocx.toml, ocx.lock and .ocx in the workspace
+  fix: the ocxHome directory /opt/ocx-home must exist and be writable by the user who opens the container; the feature does not create it
 ```
 
 ## Check ownership {#verify}
@@ -131,3 +135,5 @@ The `~/.ocx` directory exists once ocx has run a command that needs it, such as 
 
 - [Restore the project toolchain on create](restore-toolchain.md) describes the restore and its warnings.
 - [Use ocx on a minimal base image](minimal-images.md) covers images with few tools.
+- [Options](../reference/options.md#opt-ocxHome) describes `ocxHome`, the option for one store shared by all users.
+- [Fix a restore warning](../troubleshooting/restore-warnings.md#root-owned) explains the root warning in detail.

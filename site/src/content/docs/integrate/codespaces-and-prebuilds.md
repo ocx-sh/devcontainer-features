@@ -31,8 +31,8 @@ The `devcontainer up --prebuild` command of the Dev Container CLI runs the same 
 The defaults already do the work. `pull` is on, so a feature with no options restores the toolchain.
 This `devcontainer.json` states the two relevant options for clarity:
 
+<!-- doc: prebuild-devcontainer-json -->
 ```jsonc
-// doc: prebuild-devcontainer-json
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -47,7 +47,8 @@ This `devcontainer.json` states the two relevant options for clarity:
 Then enable prebuilds for the repository, as [Configuring prebuilds](https://docs.github.com/en/codespaces/prebuilding-your-codespaces/configuring-prebuilds) describes.
 Commit `ocx.lock` next to `ocx.toml`. Without it the restore prints exit code 78 and fetches nothing, as [Error: ocx.lock not found](../troubleshooting/container-errors.md#lock-missing) shows.
 
-Pull more than the default group with `pullGroups`, for example `"pullGroups": "lint,docs"`. The option takes comma-separated group names.
+Pull more than the default group with [`pullGroups`](../reference/options.md#opt-pullGroups), for example `"pullGroups": "default,lint"`.
+The option takes comma-separated group names, and a named list replaces the default group.
 
 ## Build the container in CI {#ci}
 
@@ -84,7 +85,8 @@ The `actionlint` tool accepts this file.
 The options [`noUpdateCheck`](../reference/options.md#opt-noUpdateCheck) and [`consentPaths`](../reference/options.md#opt-consentPaths) keep a prebuilt container free of network calls and prompts at start:
 
 - `noUpdateCheck` is on by default. It writes `self = "manual"` and `toolchain = "manual"` under `[update]` in `/etc/ocx/config.toml`, so `ocx` does not look for a new version.
-- `consentPaths` defaults to `/workspaces/*`. A project below that path needs no prompt. The Dev Container CLI mounts the workspace there.
+- `consentPaths` defaults to `/workspaces/*`. A project below that path activates in new shells with no prompt, and the workspace mount sits there.
+  [What the feature trusts](../concepts/trust-model.md#activation) says what that default allows.
 
 The file in a test container reads:
 
@@ -106,10 +108,14 @@ $ devcontainer exec --workspace-folder . env OCX_OFFLINE=1 ocx exec -- shfmt --v
 v3.13.1
 ```
 
-In a container whose store is empty the same command exits with code 79 and `package not found`, as [Run with no network](./mirror-and-air-gapped.md#offline) shows.
-A terminal in the prebuilt container finds the tools on `PATH` as well, because a new interactive shell composes them from the lock when it starts.
+In a container with an empty store the same command exits with code 79 and `package not found`.
+[Run with no network](./mirror-and-air-gapped.md#offline) shows that output.
+A terminal in the prebuilt container finds the tools on `PATH` as well.
+A new interactive shell in a project under `consentPaths` composes them from the lock when it starts.
 
 ## Next steps {#next-steps}
 
-- [Fix a missing tool or failed restore](../troubleshooting/container-errors.md) when the prebuild log shows an `ocx-feature: warning:` line.
+- [Fix a lock or permission error](../troubleshooting/container-errors.md) when the prebuild log shows an `ocx-feature: warning:` line.
 - [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) when the prebuild runner sits behind a proxy.
+- [Restore the project toolchain on create](../guides/restore-toolchain.md) describes the groups and the opt-out of the restore.
+- [Options](../reference/options.md#opt-pull) describes `pull`, `pullGroups` and the other options used here.

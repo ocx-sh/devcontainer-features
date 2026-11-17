@@ -15,8 +15,8 @@ The [ocx documentation on managed configuration](https://github.com/ocx-sh/ocx/b
 
 Give the [`managedConfig`](../reference/options.md#opt-managedConfig) option the OCI reference of the package:
 
+<!-- doc: managed-config -->
 ```jsonc
-// doc: managed-config
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -27,7 +27,7 @@ Give the [`managedConfig`](../reference/options.md#opt-managedConfig) option the
 }
 ```
 
-The option accepts letters, digits and the characters `. _ : / @ -`. Any other character stops the build with exit code 2.
+The option accepts letters, digits and the characters `. _ : / @ -`, and it must not start with `-`. Any other value stops the build with exit code 2.
 A reference with a digest, such as `registry.example.com/acme/fleet@sha256:<digest>`, passes that check.
 
 The build records the source in the system configuration of `ocx`. The block in `/etc/ocx/config.toml` reads:
@@ -64,8 +64,8 @@ Status  not_configured
 `ocx` also reads the source from the environment variable `OCX_MANAGED_CONFIG`. A bare `ocx config setup` uses it when no `--managed-config` flag is given.
 Without the `managedConfig` option, the feature runs nothing at creation, so the variable alone fetches nothing:
 
+<!-- doc: managed-config-env -->
 ```jsonc
-// doc: managed-config-env
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -84,7 +84,7 @@ With neither the variable, the flag nor a recorded source, `ocx config setup` ex
 error: nothing to set up: pass --managed-config <REF>, set OCX_MANAGED_CONFIG, or configure a [managed] seed
 ```
 
-## When the configuration is required but not synced {#unsynced}
+## When the configuration cannot be fetched {#unsynced}
 
 A source that cannot be fetched does not stop the container. The sync prints one warning and the create step continues.
 With `managedConfig` set to an address that serves nothing, the create log shows:
@@ -103,13 +103,14 @@ Code 64 means the source was empty. The container runs without the managed setti
 
 The feature always writes `required = false`. It has no option to make the configuration mandatory.
 A container that must not start without the managed settings needs a check of its own. `ocx config update --check` reports the status but exits with 0 even when nothing is configured.
-[Fix a missing tool or failed restore](../troubleshooting/restore-warnings.md#config-not-synced) lists the fixes.
+[Fix a restore warning](../troubleshooting/restore-warnings.md#config-not-synced) lists the fixes.
 
 ## Know whom you trust {#trust}
 
 A managed configuration changes how `ocx` behaves in every container that adopts it.
 Whoever can publish to the reference controls those settings.
 Restrict write access to the repository, and pin the reference to a digest where the tag must not move.
+[What the feature trusts](../concepts/trust-model.md#pin) lists the other settings to pin.
 
 An `/etc/ocx/config.toml` that the feature did not write is never changed.
 The feature then skips the managed source and prints a warning that names it as not applied.
@@ -118,3 +119,5 @@ The feature then skips the managed source and prints a warning that names it as 
 
 - [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) when the registry sits behind a proxy.
 - [Install from a mirror or with no internet](./mirror-and-air-gapped.md) for the build-time download.
+- [Options](../reference/options.md#opt-managedConfig) describes `managedConfig`.
+- [Fix a restore warning](../troubleshooting/restore-warnings.md#config-not-synced) matches the sync warning to its fix.
