@@ -45,11 +45,13 @@ Point `mirrorUrl` or `distUrl` at the final HTTPS address to fix that.
 
 A certificate the image does not trust adds a `curl` line to each attempt:
 
+<!-- doc-norun: curl prints this line only behind a TLS-inspecting proxy that re-signs HTTPS with a private CA -->
 <!-- doc: ts-download-untrusted-ca -->
 
 ```console
 curl: (60) SSL certificate OpenSSL verify result: unable to get local issuer certificate (20)
 ```
+<!-- /doc-norun -->
 
 In that case set `caBundle`.
 
@@ -121,7 +123,7 @@ The default `musl` build runs on every Linux image.
 
 ```console
 ocx-feature: installing missing prerequisites: ca-bundle
-ocx-feature: error: missing: ca-bundle, and no supported package manager was found; install them in the base image
+ocx-feature: error: missing: ca-bundle, and no supported package manager was found; install them in the base image, or set the caBundle option to a PEM file in the image
 ```
 
 The build exits with code 2. The message above comes from the `busybox:musl` image.
