@@ -59,7 +59,7 @@ check-installer-parity.sh"
     run grep -n '^## ' "$R/CHANGELOG.md"
     assert_line --index 0 --partial "1.0.1"
     assert_line --index 1 --partial "1.0.0"
-    assert_stub_called "git add -A -- src CHANGELOG.md"
+    assert_stub_called "git add -A -- src CHANGELOG.md site/src/content/docs"
     assert_stub_called "git diff --cached --binary HEAD"
     [ -f "$OUT_DIR/tree.patch" ]
     [ -s "$OUT_DIR/release.txt" ]
@@ -101,4 +101,20 @@ check-installer-parity.sh"
     FAKE_PARITY_RC=1 CHANGED=true run_tool "$PREP"
     assert_failure 1
     [ ! -f "$OUT_DIR/tree.patch" ]
+}
+
+@test "the docs generator runs after the changelog entry when the site has one" {
+    mkdir -p "$R/site/scripts"
+    : >"$R/site/scripts/generate-docs.mjs"
+    stub node
+    CHANGED=true run_tool "$PREP"
+    assert_success
+    assert_stub_called "node scripts/generate-docs.mjs"
+}
+
+@test "no docs generator, no node call" {
+    stub node
+    CHANGED=true run_tool "$PREP"
+    assert_success
+    refute_stub_called "node scripts/generate-docs.mjs"
 }
