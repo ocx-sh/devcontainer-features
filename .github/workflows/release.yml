@@ -1,7 +1,9 @@
 # Repo-owned workflow (not template-managed; the baseline copy lists repo_workflows: false and skips it).
 # Unattended release: a new ocx manifest at setup.ocx.sh becomes a tested, published feature version.
 # detect (seconds, hourly) -> prepare (vendor + bump + README + changelog) -> test (full gate, both arches)
-# -> publish (commit, tag, ghcr.io, verify). A failure opens one release-blocked issue; nothing is half-published.
+# -> publish (commit, tag, ghcr.io, verify). A failure opens one release-blocked issue.
+# Not atomic: the commit and tag are pushed before the registry publish. If the publish then fails, detect finds
+# the tagged but unpublished version on its next run and publishes it; verify then checks the registry content.
 # GITHUB_TOKEN pushes never trigger other workflows, so test and publish run in this same run.
 name: release
 
@@ -36,6 +38,7 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
+      packages: read
     outputs:
       run: ${{ steps.detect.outputs.run }}
       changed: ${{ steps.detect.outputs.changed }}
@@ -49,6 +52,9 @@ jobs:
           PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
           PAYLOAD_SHA256: ${{ github.event.client_payload.sha256 }}
           PAYLOAD_URL: ${{ github.event.client_payload.url }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ github.token }}
         run: sh scripts/release/detect.sh
 
   prepare:

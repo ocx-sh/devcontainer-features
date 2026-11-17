@@ -107,3 +107,51 @@ remote() {
     run cat "$GITHUB_OUTPUT"
     assert_line "changed=false"
 }
+
+# registry <tag exists: yes|no> <http code of the manifest HEAD>: the F3 world. Feature version 1.2.3,
+# unchanged manifest; git ls-remote finds the tag or not; ghcr.io answers the token call and the HEAD.
+registry() {
+    printf '{"version": "1.2.3"}\n' >"$R/src/ocx/devcontainer-feature.json"
+    if [ "$1" = yes ]; then stub git 'exit 0'; else stub git 'exit 2'; fi
+    # shellcheck disable=SC2016 # the stub body is expanded when the stub runs
+    stub curl 'case "$*" in
+*/manifests/*) printf "%s" "'"$2"'" ;;
+*ghcr.io/token*) printf "{\"token\":\"t\"}" ;;
+*) printf "%s  dist.json\n" "'"$A"'" ;;
+esac'
+    export REPO=ocx-sh/devcontainer-features ACTOR=bot GH_TOKEN=tok
+}
+
+@test "a tagged but unpublished feature version makes the run publish it" {
+    registry yes 404
+    run_tool "$DETECT"
+    assert_success
+    run cat "$GITHUB_OUTPUT"
+    assert_line "changed=false"
+    assert_line "run=true"
+    assert_line "recover=true"
+    assert_stub_called "git ls-remote --exit-code --tags origin refs/tags/v1.2.3"
+}
+
+@test "an untagged unpublished version does not" {
+    registry no 404
+    run_tool "$DETECT"
+    assert_success
+    run cat "$GITHUB_OUTPUT"
+    assert_line "run=false"
+    assert_line "recover=false"
+}
+
+@test "a tagged and published feature version does not" {
+    registry yes 200
+    run_tool "$DETECT"
+    assert_success
+    run cat "$GITHUB_OUTPUT"
+    assert_line "run=false"
+}
+
+@test "an unexpected registry answer fails the run instead of guessing" {
+    registry yes 503
+    run_tool "$DETECT"
+    assert_failure 3
+}
