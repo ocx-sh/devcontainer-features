@@ -527,7 +527,7 @@ fetch_dist() {
     fi
 }
 
-# The vendored manifest must match its recorded digest: a tampered feature tarball must not install.
+# The vendored digest only detects corruption: whoever can alter the feature tarball can alter both files.
 load_vendored_manifest() {
     [ -f "$OCXF_SRC_DIR/dist.json" ] && [ -f "$OCXF_SRC_DIR/dist.json.sha256" ] ||
         err "the bundled release manifest or its digest is missing from the feature" 4
