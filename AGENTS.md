@@ -32,6 +32,7 @@ The same gate CI runs: `ci:lint`, `ci:test` and `ci:docs`. Only `ci:build` is st
 - `src/ocx`: the feature itself, `devcontainer-feature.json`, `install.sh`, `configure.sh`, `hook.sh`, `lib.sh`, the vendored `dist.json` and the `NOTES.md` that feeds the generated `README.md`.
 - `test/unit`: Bats unit tests that run on dash, busybox sh and bash.
 - `test/ocx`: the `test.sh` that `devcontainer features test` runs inside the built container, plus its assertion helper.
+- `test/docs`: `bindings.json`, one binding per `<!-- doc: key -->` example on a page, naming the test that backs it. `site/scripts/check-doc-bindings.mjs` fails on an unbound key, a missing test or a fence that drifted from its test, and runs in `task site:docs`.
 - `test/images`: the base-image matrix runner, a BusyBox image with a CA bundle and the known limits. `test/images.txt` lists the images.
 - `scripts`: maintenance scripts for lint, the README, the manifest update, the version bump and the installer parity check.
 - `scripts/release`: the unattended release steps, which detect, prepare, verify, publish and report.
