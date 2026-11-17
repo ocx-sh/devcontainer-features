@@ -28,7 +28,7 @@ A check in the docs gate fails when this region and that file differ.
 | [`mirrorUrl`](#opt-mirrorUrl) | string | `""` | Any string | HTTPS base URL to download release archives from, for networks that cannot reach GitHub. Empty downloads from the official release location. |
 | [`caBundle`](#opt-caBundle) | string | `""` | Any string | Path inside the image to a PEM CA bundle. It is used for downloads at build time and by ocx at run time. Empty uses the system certificates. |
 | [`managedConfig`](#opt-managedConfig) | string | `""` | Any string | OCI reference of an organisation-managed ocx configuration. Empty installs no managed configuration. |
-| [`ocxHome`](#opt-ocxHome) | string | `""` | Any string | Sets OCX_HOME for all users. Empty keeps the default ~/.ocx for each user. |
+| [`ocxHome`](#opt-ocxHome) | string | `""` | Any string | Sets OCX_HOME for all users. The directory must exist and be writable by the user who opens the container; the feature does not create it. Empty keeps ~/.ocx for each user. |
 | [`installDir`](#opt-installDir) | string | `/usr/local/bin` | Any string | Directory that receives the ocx binary. It must be on PATH. |
 | [`noUpdateCheck`](#opt-noUpdateCheck) | boolean | `true` | `true`, `false` | Turn off the ocx update check, so the container makes no network call just to look for a new ocx. |
 | [`consentPaths`](#opt-consentPaths) | string | `/workspaces/*` | Any string | Colon-separated absolute paths. A project there activates in new shells and ocx grants consent without a prompt. A trailing /* covers the path and below. Empty activates nothing. |

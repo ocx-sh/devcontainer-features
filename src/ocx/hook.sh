@@ -50,7 +50,13 @@ run_checked() {
     case $__rc in
         78 | 65) __fix='run "ocx lock" in the project and commit ocx.lock' ;;
         75 | 69 | 79) __fix='check the network, mirror and proxy settings, then rerun the container command' ;;
-        74) __fix='check file ownership of ocx.toml, ocx.lock and .ocx in the workspace' ;;
+        74)
+            if [ -n "${OCXF_OCX_HOME:-}" ]; then
+                __fix="the ocxHome directory $OCXF_OCX_HOME must exist and be writable by the user who opens the container; the feature does not create it"
+            else
+                __fix='check file ownership of ocx.toml, ocx.lock and .ocx in the workspace'
+            fi
+            ;;
         64)
             if [ "$__what" = pull ]; then __fix='probably an unknown group in the pullGroups option'; else __fix='no managed config source was given'; fi
             ;;

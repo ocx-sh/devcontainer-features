@@ -266,3 +266,15 @@ stat_stub_owner() {
     OCX_PROJECT=/ hook update-content "$SANDBOX/none"
     assert_stub_called "ocx pull"
 }
+
+@test "S10 exit 74 with ocxHome set names the directory, not file ownership" {
+    write_env OCXF_OCX_HOME=/no/such/home
+    stub ocx 'exit 74'
+    hook update-content
+    assert_success
+    [ "$(warnings)" = 1 ]
+    assert_output --partial 'ocxHome'
+    assert_output --partial '/no/such/home'
+    assert_output --partial 'writable'
+    refute_output --partial 'ownership'
+}
