@@ -108,7 +108,7 @@
     },
     {
       "option": "pull",
-      "note": "The installer only installs ocx, while the feature can also restore the project toolchain at build time."
+      "note": "The installer only installs ocx, while the feature can also restore the project toolchain when the container is created."
     },
     {
       "option": "pullGroups",
