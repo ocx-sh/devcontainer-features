@@ -320,7 +320,7 @@ pm_run() {
     elif has_cmd zypper; then
         pm_retry zypper --non-interactive install "$@"
     elif has_cmd pacman; then
-        pm_retry pacman -Sy --noconfirm "$@"
+        pm_retry pacman -Syu --noconfirm --needed "$@"
     else
         return 1
     fi

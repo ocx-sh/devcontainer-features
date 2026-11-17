@@ -736,7 +736,7 @@ prep_pm() {
         "microdnf|install -y curl ca-certificates" \
         "yum|install -y curl ca-certificates" \
         "zypper|--non-interactive install curl ca-certificates" \
-        "pacman|-Sy --noconfirm curl ca-certificates"; do
+        "pacman|-Syu --noconfirm --needed curl ca-certificates"; do
         pm=${spec%%|*}
         : >"$STUB_LOG"
         prep_pm
