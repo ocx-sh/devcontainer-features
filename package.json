@@ -1,0 +1,12 @@
+{
+  "name": "devcontainer-features",
+  "private": true,
+  "description": "Dev tooling for the ocx Dev Container Feature (test harness and devcontainer CLI). Not published.",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@devcontainers/cli": "0.90.0",
+    "bats": "1.13.0",
+    "bats-assert": "2.2.4",
+    "bats-support": "0.3.0"
+  }
+}
