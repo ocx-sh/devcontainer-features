@@ -745,6 +745,14 @@ prep_pm() {
     assert_output --partial "no supported package manager"
 }
 
+@test "no package manager and no CA bundle names the CA bundle and the caBundle option" {
+    prep_pm
+    inst
+    assert_failure 2
+    assert_output --partial "ca-bundle"
+    assert_output --partial "caBundle option"
+}
+
 @test "missing tar and gzip are installed by name" {
     no_applets
     make_curl "$STUB_DIR/curl"
