@@ -16,7 +16,7 @@ You need Docker, the Dev Containers extension for VS Code or the `devcontainer` 
 Add the feature reference to the `features` object of `.devcontainer/devcontainer.json`.
 
 <!-- doc: qs-feature-json -->
-```jsonc-run
+```jsonc
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -32,13 +32,13 @@ Rebuild the container. In VS Code, run **Dev Containers: Rebuild Container** fro
 Open a terminal in the container and print the version.
 
 <!-- doc: qs-ocx-version -->
-```bash-run
+```bash
 ocx version
 ```
 
 The output is the ocx version this feature release was tested with.
 
-```text
+```console
 0.6.8
 ```
 
@@ -48,7 +48,7 @@ Create a project file, add the `jq` tool to it, and run it through `ocx exec`.
 The `ocx add` command fetches the tool and writes `ocx.lock`, which pins the exact build.
 
 <!-- doc: qs-add-tool -->
-```bash-run
+```bash
 ocx init
 ocx add jqlang/jq:1.8
 ocx exec -- jq --version
@@ -56,7 +56,7 @@ ocx exec -- jq --version
 
 The last command prints the version of the pinned tool.
 
-```text
+```console
 jq-1.8.2
 ```
 
