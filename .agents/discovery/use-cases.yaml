@@ -1,0 +1,418 @@
+# docs-plan artifact for the ocx Dev Container Feature.
+# Location override: the skill default is docs/discovery/use-cases.yaml. This repo keeps
+# discovery output under .agents/discovery/ (owner instruction), off the published surface;
+# the page-declaration check excludes .agents by design.
+# Human-readable page-by-page spec for the writer: writer-inventory.md (same directory).
+# Friction logs: friction-logs/<task id>.md.
+
+product_shape: cli          # assumption A1: the feature installs a CLI and ends at one printed value
+signal: friction-log-severity
+generated: 2026-11-17
+# No pages exist yet (greenfield): inventory is empty, delete list is empty, every action is write.
+# The declaration for product_shape must also be written into the docs config (site/ does not
+# exist yet; planned carrier: site/docs.toml, key product_shape = "cli"). Not written here because
+# this run may touch only .agents/discovery/.
+
+surface_sources:            # never docs page titles
+  - feature-option          # the 12 options of devcontainer-feature.json (planned)
+  - lifecycle-hook          # the ocx pull hook
+  - editor-extension        # ocx-sh.ocx
+  - installer-variable      # OCX_INSTALL_* of www-setup/src/install.sh
+  - installer-exit-code     # install.sh exit codes 0-7
+  - readme-heading          # setup-ocx README sections (nearest sibling)
+  - issue-title             # devcontainers/features issues cited in research/feature-implementation-survey.md
+  - goal-file               # required use-case list in .agents/goals/ocx-feature.md
+  # Issues and PRs in this repo: none exist yet (one merged adoption PR). Changelog: none. Search logs and telemetry: none.
+
+# Surface completeness (DOC-DISC-08). Every option and entry point maps to a task or is out of scope.
+entry_points:
+  - { surface: "option version",          task: T03 }
+  - { surface: "option distUrl",          task: T08 }
+  - { surface: "option mirrorUrl",        task: T08 }
+  - { surface: "option caBundle",         task: T07 }
+  - { surface: "option libc",             task: T06 }
+  - { surface: "option managedConfig",    task: T09 }
+  - { surface: "option ocxHome",          task: T05 }
+  - { surface: "option installDir",       task: T06 }
+  - { surface: "option noUpdateCheck",    task: T10 }
+  - { surface: "option consentPaths",     task: T04 }
+  - { surface: "option pull",             task: T04 }
+  - { surface: "option groups",           task: T04 }
+  - { surface: "lifecycle hook (restore)", task: T04 }
+  - { surface: "extension ocx-sh.ocx",    task: T04 }
+  - { surface: "install.sh exit codes",   task: T11 }
+  - { surface: "OCX_INSTALL_* variables", task: T13 }
+
+out_of_scope:
+  - { id: X01, surface: "ocx self setup, shell profile edits, completions", why: "the feature never runs ocx self setup at build; per-user shell wiring is the hook's job and is explained in T04, not a separate task" }
+  - { id: X02, surface: "ocx self update inside the container", why: "an install under /usr/local/bin is not managed by self update; the supported upgrade is a new feature version (T03)" }
+  - { id: X03, surface: "private registry credentials (OCX_AUTH_*)", why: "no credential option exists by design; the ocx docs own credential setup, T07 and T09 link there" }
+  - { id: X04, surface: "checksum off-switch, OCX_NO_VERIFY, OCX_ALLOW_YANKED", why: "none exists; stated once in the parity page (T13)" }
+  - { id: X05, surface: "writing ocx.toml and choosing tools", why: "ocx docs own project authoring; the quickstart shows only the minimum" }
+  - { id: X06, surface: "Dockerfile COPY recipe for ocx without the feature", why: "superseded by the feature; remains in the ocx docs as a fallback for unsupported bases (announcement PR D)" }
+  - { id: X07, surface: "Windows containers, macOS hosts as container OS, 32-bit, riscv, ppc64le, s390x", why: "ocx ships Linux x86_64 and aarch64 only for this surface; stated in supported-images" }
+  - { id: X08, surface: "building, testing and releasing the feature (task run, task test:image, release workflow)", why: "contributor documentation, belongs in CONTRIBUTING and AGENTS.md, not the user site" }
+  - { id: X09, surface: "devcontainer CLI, Dev Containers extension and Codespaces setup in general", why: "upstream documentation; pages link out" }
+
+tasks:
+  - id: T01
+    task: "start a dev container whose first terminal has ocx ready"
+    source: goal-file
+    signal: friction-log-severity
+    rank: 1
+    tier: first-steps
+    depends_on: []
+    friction_log: .agents/discovery/friction-logs/T01.md
+    user_need:
+      as_a: "developer with an existing devcontainer.json who has never added a Feature"
+      i_need_to: "get ocx running inside my container from a one-line change"
+      so_that: "my team's setup stops depending on a README of manual install steps"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/index.md, site/src/content/docs/quickstart.md]
+
+  - id: T02
+    task: "judge whether the feature works with my base image and container user"
+    source: issue-title      # devcontainers/features #498, #824, #307 (Alpine and non-root regressions)
+    signal: friction-log-severity
+    rank: 7
+    tier: first-steps
+    depends_on: []
+    friction_log: missing    # predicted need, no run possible before the feature exists; see T05 and T01 logs for the observed half
+    user_need:
+      as_a: "developer choosing between Features who has a specific base image"
+      i_need_to: "see before I adopt whether my image and user are covered"
+      so_that: "I do not discover an unsupported setup after a failed rebuild"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/index.md, site/src/content/docs/reference/supported-images.md]
+
+  - id: T03
+    task: "control which ocx version my containers run, and move it deliberately"
+    source: goal-file
+    signal: friction-log-severity
+    rank: 9
+    tier: everyday
+    depends_on: [T01]
+    friction_log: missing    # predicted, see writer-inventory.md section P03
+    user_need:
+      as_a: "developer or team lead with a working container"
+      i_need_to: "keep every rebuild on one known ocx version and choose when it changes"
+      so_that: "a rebuild next month does not break the team's hooks"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/guides/pin-or-upgrade-version.md, site/src/content/docs/changelog.md]
+
+  - id: T04
+    task: "have the project's declared tools restored and on PATH whenever the container is created"
+    source: lifecycle-hook
+    signal: friction-log-severity
+    rank: 4
+    tier: everyday
+    depends_on: [T01]
+    friction_log: .agents/discovery/friction-logs/T04.md
+    user_need:
+      as_a: "developer cloning a repository that carries a lock for its tools"
+      i_need_to: "open the container and run every project tool without a manual fetch step"
+      so_that: "a new teammate is productive in the first terminal"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/guides/restore-toolchain.md]
+
+  - id: T05
+    task: "make the install work for root, a named user, and a user that differs between build and session"
+    source: issue-title      # devcontainers/features #307
+    signal: friction-log-severity
+    rank: 2
+    tier: everyday
+    depends_on: [T01]
+    friction_log: .agents/discovery/friction-logs/T05.md
+    user_need:
+      as_a: "developer whose container runs as a non-root or custom user"
+      i_need_to: "have ocx and my tools work for that user without permission errors"
+      so_that: "I do not fight file ownership every time the container is rebuilt"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/guides/non-root-and-custom-users.md]
+
+  - id: T06
+    task: "run ocx on a minimal image that lacks curl, bash or CA certificates"
+    source: issue-title      # devcontainers/features #498, #824; survey anti-patterns
+    signal: friction-log-severity
+    rank: 3
+    tier: everyday
+    depends_on: [T01]
+    friction_log: .agents/discovery/friction-logs/T01.md   # the bare-image runs are in the T01 log
+    user_need:
+      as_a: "maintainer of a small base image such as Alpine or Wolfi"
+      i_need_to: "add ocx to an image that has almost nothing installed"
+      so_that: "I keep the image small without writing my own install script"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/guides/minimal-images.md, site/src/content/docs/reference/supported-images.md]
+
+  - id: T07
+    task: "build and run behind a TLS-intercepting proxy with a corporate certificate authority"
+    source: goal-file
+    signal: friction-log-severity
+    rank: 6
+    tier: integration
+    depends_on: [T01]
+    friction_log: missing    # predicted, see writer-inventory.md section P08
+    user_need:
+      as_a: "platform engineer whose builders reach the internet only through an inspecting proxy"
+      i_need_to: "get the install and the later tool downloads to trust the company certificate"
+      so_that: "containers build on every developer machine without TLS errors"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/integrate/proxy-and-custom-ca.md]
+
+  - id: T08
+    task: "build containers when the builders cannot reach GitHub or the public registry"
+    source: goal-file
+    signal: friction-log-severity
+    rank: 5
+    tier: integration
+    depends_on: [T01]
+    friction_log: .agents/discovery/friction-logs/T08.md
+    user_need:
+      as_a: "platform engineer on a network that allows only internal hosts"
+      i_need_to: "serve the ocx archive and its release manifest from an internal host"
+      so_that: "every container builds with no route to the public internet and the same verified bytes"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/integrate/mirror-and-air-gapped.md]
+
+  - id: T09
+    task: "give every container the organisation's central ocx configuration"
+    source: feature-option
+    signal: friction-log-severity
+    rank: 10
+    tier: integration
+    depends_on: [T01]
+    friction_log: missing    # predicted, see writer-inventory.md section P10
+    user_need:
+      as_a: "platform engineer who owns registry mirrors and trust settings for many repositories"
+      i_need_to: "apply one shared configuration to every dev container from one place"
+      so_that: "teams cannot drift from the approved registries"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/integrate/managed-config.md]
+
+  - id: T10
+    task: "prebuild the container so tools are already in the image when a developer opens it"
+    source: goal-file
+    signal: friction-log-severity
+    rank: 8
+    tier: integration
+    depends_on: [T01, T04]
+    friction_log: missing    # predicted, see writer-inventory.md section P11
+    user_need:
+      as_a: "team using Codespaces prebuilds or a CI job that builds the dev container"
+      i_need_to: "fetch the project's tools during the prebuild instead of at every open"
+      so_that: "opening a container takes seconds and CI proves the container still builds"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/integrate/codespaces-and-prebuilds.md]
+
+  - id: T11
+    task: "find the cause of a failed container build or a missing tool from the message I see"
+    source: installer-exit-code
+    signal: friction-log-severity
+    rank: 11
+    tier: everyday
+    depends_on: [T01]
+    friction_log: .agents/discovery/friction-logs/T01.md   # observed failures: missing curl with exit 0, offline wget
+    user_need:
+      as_a: "developer whose build or first terminal just failed"
+      i_need_to: "match the message on my screen to its cause and fix"
+      so_that: "I get back to work without opening an issue"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/troubleshooting/install-errors.md, site/src/content/docs/troubleshooting/container-errors.md]
+
+  - id: T12
+    task: "look up what an option does, its allowed values and its default"
+    source: feature-option
+    signal: friction-log-severity
+    rank: 12
+    tier: everyday
+    depends_on: [T01]
+    friction_log: missing
+    user_need:
+      as_a: "developer editing devcontainer.json by hand"
+      i_need_to: "find the exact value type and default of a setting"
+      so_that: "my configuration is valid the first time"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/reference/options.md, site/src/content/docs/reference/environment-and-files.md]
+
+  - id: T13
+    task: "carry my existing install script's settings over to the feature"
+    source: installer-variable
+    signal: friction-log-severity
+    rank: 13
+    tier: integration
+    depends_on: [T01]
+    friction_log: missing
+    user_need:
+      as_a: "platform engineer migrating a Dockerfile that runs the one-line installer"
+      i_need_to: "find where each installer setting went, or why it has no equivalent"
+      so_that: "I replace the script without losing a safeguard"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/reference/installer-parity.md]
+
+  - id: T14
+    task: "review what the install writes and verifies before approving it"
+    source: goal-file
+    signal: friction-log-severity
+    rank: 14
+    tier: integration
+    depends_on: [T01]
+    friction_log: missing
+    user_need:
+      as_a: "security reviewer asked to approve a new build-time dependency"
+      i_need_to: "see which files it writes, which bytes it trusts and what it never touches"
+      so_that: "I can sign off on the supply-chain risk"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/concepts/how-the-install-works.md, site/src/content/docs/reference/environment-and-files.md]
+
+  - id: T15
+    task: "tell which ocx version a given feature release installs"
+    source: goal-file
+    signal: friction-log-severity
+    rank: 15
+    tier: everyday
+    depends_on: [T01]
+    friction_log: missing
+    user_need:
+      as_a: "developer deciding whether to bump the feature tag"
+      i_need_to: "see which ocx version each feature release carries"
+      so_that: "I upgrade to a version I have read the notes for"
+    solution_shaped: false
+    existing_page: missing
+    page_word_count: 0
+    page_status: missing
+    action: write
+    pages: [site/src/content/docs/changelog.md]
+
+# Merged candidates (collapse step): a "VS Code and Codespaces" candidate from the announcement
+# research split into the extension section of T04 and T10. "Tutorial" candidate merged into T01
+# (DOC-DISC-19: one linear setup is not a tutorial). "Reproduce in CI" merged into T10.
+
+coverage:                     # task, page, verdict
+  - { task: "T01 first terminal has ocx",            page: "index.md; quickstart.md",                                  verdict: write }
+  - { task: "T02 judge fit for my image and user",   page: "index.md; reference/supported-images.md",                  verdict: write }
+  - { task: "T03 control and move the ocx version",  page: "guides/pin-or-upgrade-version.md; changelog.md",           verdict: write }
+  - { task: "T04 restore tools on create",           page: "guides/restore-toolchain.md",                              verdict: write }
+  - { task: "T05 root, named and split users",       page: "guides/non-root-and-custom-users.md",                      verdict: write }
+  - { task: "T06 minimal images",                    page: "guides/minimal-images.md; reference/supported-images.md",  verdict: write }
+  - { task: "T07 proxy and corporate CA",            page: "integrate/proxy-and-custom-ca.md",                         verdict: write }
+  - { task: "T08 mirror and air-gapped",             page: "integrate/mirror-and-air-gapped.md",                       verdict: write }
+  - { task: "T09 organisation-managed configuration", page: "integrate/managed-config.md",                             verdict: write }
+  - { task: "T10 prebuilds and CI",                  page: "integrate/codespaces-and-prebuilds.md",                    verdict: write }
+  - { task: "T11 diagnose from the message",         page: "troubleshooting/install-errors.md; troubleshooting/container-errors.md", verdict: write }
+  - { task: "T12 look up an option",                 page: "reference/options.md; reference/environment-and-files.md", verdict: write }
+  - { task: "T13 installer-to-option migration",     page: "reference/installer-parity.md",                            verdict: write }
+  - { task: "T14 security review",                   page: "concepts/how-the-install-works.md; reference/environment-and-files.md", verdict: write }
+  - { task: "T15 feature release to ocx version",    page: "changelog.md",                                             verdict: write }
+unmapped_pages: []            # no page exists yet
+
+delete_list: []               # greenfield: no existing page, so no page can fail both delete signals
+merge_list:                   # candidates merged before any page was written (nothing to apply)
+  - { from: "tutorial: first dev container with pinned tools", into: "quickstart.md", why: "single linear path, not two interacting concepts (DOC-DISC-19)" }
+  - { from: "use with VS Code and Codespaces",                  into: "guides/restore-toolchain.md (extension) and integrate/codespaces-and-prebuilds.md", why: "two different tasks and tiers in one page" }
+  - { from: "reproduce the container in CI",                    into: "integrate/codespaces-and-prebuilds.md", why: "same prebuild task, same reader" }
+external_pages:               # exist in other repositories; changed by the announcement PRs, not by this plan
+  - { repo: ocx-sh/ocx, path: "website/src/content/docs/integration/devcontainers-and-editors.mdx", action: expand, note: "section {#devcontainer} says there is no dev container feature; replace with the feature reference and link to the site, keep the anchor" }
+  - { repo: ocx-sh/ocx, path: "website/src/content/docs/roadmap.md", action: expand, note: "row DevContainer features: Planned to Shipped, link the site" }
+  - { repo: ocx-sh/ocx, path: "website/src/content/docs/integration/index.md", action: expand, note: "add the site link" }
+
+# ia_plan: the nav file is site/astro.config.mjs (Starlight sidebar; groups are objects with label and items).
+# First-steps entry and the everyday hub sit in different top-level groups (DOC-DISC-21).
+# Longest nesting: group, page (2 levels). Group the top level: 5 groups for 18 pages (DOC-NAV-03).
+ia_plan:
+  base: /integrations/devcontainer/
+  groups:
+    - label: "Get started"
+      tier: first-steps
+      pages:
+        - { path: site/src/content/docs/index.md,       doc_type: landing, doc_tier: first-steps, action: write, serves: [T01, T02] }
+        - { path: site/src/content/docs/quickstart.md,  doc_type: how-to,  doc_tier: first-steps, action: write, serves: [T01] }
+    - label: "Guides"
+      tier: everyday
+      pages:
+        - { path: site/src/content/docs/guides/pin-or-upgrade-version.md,     doc_type: how-to, doc_tier: everyday, action: write, serves: [T03] }
+        - { path: site/src/content/docs/guides/restore-toolchain.md,           doc_type: how-to, doc_tier: everyday, action: write, serves: [T04] }
+        - { path: site/src/content/docs/guides/non-root-and-custom-users.md,   doc_type: how-to, doc_tier: everyday, action: write, serves: [T05] }
+        - { path: site/src/content/docs/guides/minimal-images.md,              doc_type: how-to, doc_tier: everyday, action: write, serves: [T06] }
+    - label: "Integrate"
+      tier: integration
+      pages:
+        - { path: site/src/content/docs/integrate/proxy-and-custom-ca.md,        doc_type: how-to, doc_tier: integration, action: write, serves: [T07] }
+        - { path: site/src/content/docs/integrate/mirror-and-air-gapped.md,      doc_type: how-to, doc_tier: integration, action: write, serves: [T08] }
+        - { path: site/src/content/docs/integrate/managed-config.md,             doc_type: how-to, doc_tier: integration, action: write, serves: [T09] }
+        - { path: site/src/content/docs/integrate/codespaces-and-prebuilds.md,   doc_type: how-to, doc_tier: integration, action: write, serves: [T10] }
+    - label: "Concepts"
+      pages:
+        - { path: site/src/content/docs/concepts/how-the-install-works.md, doc_type: explanation, action: write, serves: [T14] }
+    - label: "Troubleshooting"
+      pages:
+        - { path: site/src/content/docs/troubleshooting/install-errors.md,   doc_type: troubleshooting, action: write, serves: [T11] }
+        - { path: site/src/content/docs/troubleshooting/container-errors.md, doc_type: troubleshooting, action: write, serves: [T11] }
+    - label: "Reference"
+      pages:
+        - { path: site/src/content/docs/reference/options.md,               doc_type: reference, action: write, serves: [T12] }
+        - { path: site/src/content/docs/reference/installer-parity.md,      doc_type: reference, action: write, serves: [T13] }
+        - { path: site/src/content/docs/reference/environment-and-files.md, doc_type: reference, action: write, serves: [T12, T14] }
+        - { path: site/src/content/docs/reference/supported-images.md,      doc_type: reference, action: write, serves: [T02, T06] }
+        - { path: site/src/content/docs/changelog.md,                       doc_type: changelog, action: write, serves: [T03, T15] }
+  outside_site:                 # shown by tooling, same user needs, separate files
+    - { path: README.md,            doc_type: readme, action: write, serves: [T01, T02], note: "repo root; link the site (DOC-TYPE-34), license, who it is for" }
+    - { path: src/ocx/NOTES.md,     doc_type: readme, action: write, serves: [T01, T02, T05, T06], note: "hand-written; appended to the generated README on containers.dev and in the VS Code picker" }
+    - { path: src/ocx/README.md,    doc_type: readme, action: keep, serves: [T12], note: "generated by devcontainer features generate-docs; never hand-edit; option table cannot drift" }
+  deletes: []
