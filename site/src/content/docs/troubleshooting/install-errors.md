@@ -80,7 +80,8 @@ ocx-feature: error: libc: gnu needs glibc 2.28 or newer, which this image does n
 The build exits with code 7. The message above comes from `libc: "gnu"` on `alpine:3`.
 
 This issue occurs when the options ask for a build the image cannot run. The `gnu` build needs glibc 2.28 at least. Alpine uses musl.
-Exit code 7 also covers an operating system other than Linux, a CPU that is neither x86_64 nor aarch64, and an installed binary that does not run.
+Exit code 7 also covers a system other than Linux and a CPU that is neither x86_64 nor aarch64.
+It covers an installed binary that does not run as well.
 
 To fix it, remove the `libc` option or set it to `musl` or `auto`.
 The default `musl` build runs on every Linux image.
