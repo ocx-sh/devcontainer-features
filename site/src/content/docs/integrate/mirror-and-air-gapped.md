@@ -87,7 +87,7 @@ Copy the official manifest from `https://setup.ocx.sh/dist.json` and keep its sh
 ```
 
 The `url` of each row is the archive location, and `mirrorUrl` replaces it when set.
-With `version: "pinned"` or `"latest"` the feature takes the highest stable version in the manifest. A value such as `"0.6.8"` selects that row.
+With `version: "pinned"` or `"latest"` the feature takes the first stable release the manifest lists. A value such as `"0.6.8"` selects that row.
 Name the manifest after its own SHA-256 digest, and the build verifies it:
 
 ```jsonc
