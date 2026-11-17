@@ -94,6 +94,13 @@ run_sh() {
     fi
 }
 
+# run_tool <abs script> [args...]: run a repo tool (scripts/, outside the coverage scope) under the
+# interpreter under test, never under the coverage tracer.
+run_tool() {
+    # shellcheck disable=SC2086 # OCXF_TEST_SH is deliberately word-split
+    run $OCXF_TEST_SH "$@"
+}
+
 # run_snippet <sh code>: run a code snippet under the interpreter under test; for sourcing lib.sh.
 # The snippet sees $OCXF_SRC_DIR and the sandbox variables.
 run_snippet() {
