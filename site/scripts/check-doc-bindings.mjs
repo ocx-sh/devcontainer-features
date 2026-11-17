@@ -222,7 +222,7 @@ export function check(repo) {
       for (const k of extra) if (!b.unchecked?.[k]) here(`the fence has '${k}', which no test compares; name it in "unchecked" with a reason`);
       for (const k of Object.keys(b.unchecked ?? {})) if (!extra.includes(k)) here(`unchecked '${k}' is not in the fence; remove it`);
     } else if (lang === 'console') {
-      const expect = [...derived, ...(b.expect ?? [])].map((s) => s.trim()).filter(Boolean);
+      const expect = [...derived, ...(b.expect ?? [])].filter((s) => s.trim());
       const fragments = [...new Set(expect.map(canon))];
       if (!fragments.length) here('a console example needs "expect" fragments the test asserts');
       for (const frag of fragments) {

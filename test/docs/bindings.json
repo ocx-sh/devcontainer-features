@@ -1,0 +1,208 @@
+{
+  "index-feature-line": { "kind": "scenario", "test": "ubuntu-default" },
+  "qs-feature-json": { "kind": "scenario", "test": "ubuntu-default" },
+  "qs-ocx-version": { "kind": "scenario", "test": "ubuntu-default" },
+  "qs-add-tool": { "kind": "scenario", "test": "ubuntu-default" },
+
+  "version-default": { "kind": "scenario", "test": "ubuntu-default" },
+  "version-exact": { "kind": "scenario", "test": "version-exact", "imageReason": "the option does not depend on the image; the scenario keeps the smaller one" },
+  "version-unknown": { "kind": "failure", "test": "fail-unknown-version" },
+  "version-too-old": { "kind": "failure", "test": "fail-version-too-old" },
+  "version-follow": { "kind": "scenario", "test": "version-latest", "imageReason": "the scenario runs alpine, where the newest release must install too" },
+  "version-check": { "kind": "scenario", "test": "ubuntu-default" },
+
+  "restore-default": { "kind": "scenario", "test": "ubuntu-default" },
+  "restore-no-lock": {
+    "kind": "scenario",
+    "test": "hook-no-lock",
+    "expect": [
+      "ocx-feature: warning: ocx pull failed with exit code 78.",
+      "attempted: /usr/local/bin/ocx pull",
+      "fix: run \"ocx lock\" in the project and commit ocx.lock"
+    ]
+  },
+  "restore-groups": { "kind": "scenario", "test": "restore-groups" },
+  "restore-pull-off": { "kind": "scenario", "test": "pull-off", "imageReason": "the option does not depend on the image; the scenario keeps the smaller one" },
+  "restore-activation": { "kind": "scenario", "test": "ubuntu-default" },
+
+  "user-root": { "kind": "scenario", "test": "user-remote-root" },
+  "user-named": { "kind": "scenario", "test": "user-remote-vscode" },
+  "user-split": { "kind": "scenario", "test": "user-container-root-remote-vscode" },
+  "user-remote-unset": { "kind": "scenario", "test": "user-root" },
+  "user-ocxhome-unwritable": {
+    "kind": "unit",
+    "test": "hook.bats::S10 exit 74 with ocxHome set names the directory, not file ownership",
+    "normalize": [["/opt/ocx-home", "/no/such/home"]],
+    "expect": [
+      "ocx-feature: warning: ocx pull failed with exit code 74.",
+      "fix: the ocxHome directory /no/such/home must exist and be writable by the user who opens the container; the feature does not create it"
+    ],
+    "skip": [{ "line": "attempted:", "reason": "the unit test's ocx is a stub, so the attempted path is the stub's; the scenario hook-no-lock asserts the real path" }]
+  },
+  "user-verify": { "kind": "scenario", "test": "user-remote-vscode" },
+
+  "image-alpine": { "kind": "image", "test": "alpine" },
+  "image-debian-slim": { "kind": "image", "test": "debian" },
+  "image-ubi-minimal": { "kind": "image", "test": "ubi-minimal" },
+  "image-wolfi": { "kind": "image", "test": "wolfi" },
+  "libc-gnu": { "kind": "scenario", "test": "libc-gnu", "imageReason": "the option does not depend on the image; the scenario keeps the smaller one" },
+  "install-dir": { "kind": "scenario", "test": "install-dir", "imageReason": "the option does not depend on the image; the scenario keeps the smaller one" },
+
+  "prebuild-devcontainer-json": { "kind": "scenario", "test": "prebuild" },
+
+  "managed-config": {
+    "kind": "scenario",
+    "test": "managed-config",
+    "imageReason": "the option does not depend on the image; the scenario keeps the smaller one",
+    "normalize": [
+      ["registry\\.example\\.com/acme/fleet:1", "<SOURCE>"],
+      ["ghcr\\.io/ocx-sh/devcontainer-features-test/no-such-managed-config:1", "<SOURCE>"]
+    ]
+  },
+  "managed-config-env": {
+    "kind": "scenario",
+    "test": "managed-config-env",
+    "normalize": [["registry\\.example\\.com/acme/fleet:1", "<SOURCE>"], ["localhost:9/acme/fleet:1", "<SOURCE>"]],
+    "unchecked": { "postCreateCommand": "the scenario runs the hook and ocx config setup by hand; the CLI's postCreateCommand step is outside devcontainer features test" }
+  },
+  "managed-config-unreachable": {
+    "kind": "unit",
+    "test": "hook.bats::on-create failure warns once with the fix and still exits 0",
+    "normalize": [["ocx\\.sh/c/d:u", "localhost:9/acme/fleet:1"]],
+    "expect": [
+      "ocx-feature: warning: ocx config setup failed with exit code 75.",
+      "config setup --managed-config=localhost:9/acme/fleet:1",
+      "fix: check the network, mirror and proxy settings, then rerun the container command"
+    ],
+    "skip": [{ "line": "error: failed to sync the managed-config snapshot", "reason": "ocx's own error text; the unit test's ocx is a stub that only exits 75" }]
+  },
+
+  "mirror-url": {
+    "kind": "scenario",
+    "test": "mirror-url",
+    "imageReason": "the option does not depend on the image; the scenario keeps the smaller one",
+    "normalize": [["https://mirror\\.example\\.com/ocx", "<MIRROR>"], ["https://github\\.com/ocx-sh/ocx/releases/download", "<MIRROR>"]]
+  },
+  "dist-url": {
+    "kind": "scenario",
+    "test": "dist-url-digest",
+    "imageReason": "the option does not depend on the image; the scenario runs alpine, where wget validates less and the digest pin matters",
+    "normalize": [["https://mirror\\.example\\.com/ocx/[0-9a-f]{64}\\.json", "<DIST>"], ["https://setup\\.ocx\\.sh/dist/@DIST_DIGEST@\\.json", "<DIST>"]]
+  },
+  "offline-run": { "kind": "scenario", "test": "offline-run" },
+
+  "proxy-build-args": { "kind": "norun", "reason": "the build args take effect only behind a proxy, and the gate has none" },
+  "ca-bundle": {
+    "kind": "scenario",
+    "test": "ca-bundle",
+    "normalize": [["/usr/local/share/ca-certificates/corp-ca\\.pem", "<CA>"], ["/etc/ocx-test/ca\\.pem", "<CA>"]],
+    "unchecked": { "build": "the scenario builds on the local small-ca image, whose Dockerfile has an empty certificate store like the page's Dockerfile" }
+  },
+  "proxy-runtime-env": { "kind": "norun", "reason": "the containerEnv proxy takes effect only behind a proxy, and the gate has none" },
+
+  "how-install-files": { "kind": "scenario", "test": "ubuntu-default" },
+  "trust-narrow-consent": { "kind": "scenario", "test": "consent-narrow" },
+
+  "ts-lock-missing": {
+    "kind": "scenario",
+    "test": "hook-no-lock",
+    "expect": [
+      "error: ocx.lock not found at ",
+      "/ocx.lock; run `ocx lock` to create it",
+      "ocx-feature: warning: ocx pull failed with exit code 78.",
+      "attempted: /usr/local/bin/ocx pull",
+      "fix: run \"ocx lock\" in the project and commit ocx.lock"
+    ]
+  },
+  "ts-lock-stale": {
+    "kind": "scenario",
+    "test": "hook-no-lock",
+    "expect": [
+      "error: ocx.lock is stale (it does not match ocx.toml); run `ocx lock`",
+      "ocx-feature: warning: ocx pull failed with exit code 65.",
+      "attempted: /usr/local/bin/ocx pull",
+      "fix: run \"ocx lock\" in the project and commit ocx.lock"
+    ]
+  },
+  "ts-store-permission": {
+    "kind": "unit",
+    "test": "hook.bats::docs: exit 74 without ocxHome points at the file ownership",
+    "expect": [
+      "ocx-feature: warning: ocx pull failed with exit code 74.",
+      "fix: check file ownership of ocx.toml, ocx.lock and .ocx in the workspace"
+    ],
+    "skip": [
+      { "line": "I/O error: Permission denied", "reason": "ocx's own error text; the unit test's ocx is a stub that only exits 74" },
+      { "line": "attempted:", "reason": "the unit test's ocx is a stub, so the attempted path is the stub's; the scenario hook-no-lock asserts the real path" }
+    ]
+  },
+
+  "ts-download-failed": { "kind": "failure", "test": "fail-mirror-dead" },
+  "ts-download-untrusted-ca": { "kind": "norun", "reason": "curl prints this line only behind a TLS-inspecting proxy that re-signs HTTPS with a private CA" },
+  "ts-checksum-mismatch": {
+    "kind": "unit",
+    "test": "install.bats::checksum mismatch exits 4 and tar is never called",
+    "expect": ["ocx-feature: error: checksum mismatch for ocx-", "  expected: ", "  got:      "]
+  },
+  "ts-unsupported-platform": { "kind": "failure", "test": "fail-libc-gnu-alpine" },
+  "ts-missing-prerequisite": {
+    "kind": "unit",
+    "test": "install.bats::docs: only the CA bundle missing and no package manager",
+    "expect": [
+      "ocx-feature: installing missing prerequisites: ca-bundle",
+      "ocx-feature: error: missing: ca-bundle, and no supported package manager was found; install them in the base image, or set the caBundle option to a PEM file in the image"
+    ]
+  },
+
+  "ts-version-not-found": { "kind": "failure", "test": "fail-unknown-version" },
+  "ts-version-too-old": { "kind": "failure", "test": "fail-version-too-old" },
+  "ts-ca-bundle-missing": {
+    "kind": "failure",
+    "test": "fail-ca-bundle-missing",
+    "normalize": [["/usr/local/share/ca-certificates/corp\\.pem", "<CA>"], ["/no/such/bundle\\.pem", "<CA>"]]
+  },
+  "ts-invalid-option": { "kind": "failure", "test": "fail-invalid-libc" },
+
+  "ts-root-owned": {
+    "kind": "unit",
+    "test": "hook.bats::root on a workspace owned by someone else does not pull",
+    "expect": [
+      "ocx-feature: warning: not pulling: ",
+      " is owned by another user and this hook runs as root, which would take over ocx.lock and the toolchain links; run ocx pull as that user"
+    ]
+  },
+  "ts-config-not-synced": {
+    "kind": "unit",
+    "test": "hook.bats::on-create failure warns once with the fix and still exits 0",
+    "normalize": [["ocx\\.sh/c/d:u", "localhost:9/acme/fleet:1"]],
+    "expect": [
+      "ocx-feature: warning: ocx config setup failed with exit code 75.",
+      "config setup --managed-config=localhost:9/acme/fleet:1",
+      "fix: check the network, mirror and proxy settings, then rerun the container command"
+    ],
+    "skip": [{ "line": "error: failed to sync the managed-config snapshot", "reason": "ocx's own error text; the unit test's ocx is a stub that only exits 75" }]
+  },
+  "ts-package-not-for-platform": {
+    "kind": "scenario",
+    "test": "lock-glibc-only",
+    "normalize": [["linux/(amd64|arm64|\\$arch)\\+libc", "linux/<ARCH>+libc"]],
+    "expect": [
+      "error: no 'linux/<ARCH>+libc.musl' leaf for binding 'node' at the locked version; run ",
+      "`ocx update` to re-resolve if it has since been added"
+    ]
+  },
+
+  "ts-outside-consent-paths": {
+    "kind": "scenario",
+    "test": "ubuntu-default",
+    "normalize": [["shfmt|jq", "<TOOL>"]],
+    "expect": ["bash: <TOOL>: command not found"]
+  },
+  "ts-consent-paths-added": { "kind": "scenario", "test": "consent-added" },
+  "ts-command-not-found": {
+    "kind": "scenario",
+    "test": "shell-activation-off",
+    "normalize": [["shfmt|jq", "<TOOL>"]],
+    "expect": ["bash: <TOOL>: command not found"]
+  }
+}

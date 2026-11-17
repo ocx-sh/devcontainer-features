@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev --host",
     "build": "astro build",
-    "test": "node --test scripts/lighthouse.test.mjs scripts/generate-docs.test.mjs",
+    "test": "node --test scripts/lighthouse.test.mjs scripts/generate-docs.test.mjs scripts/check-doc-bindings.test.mjs",
     "check": "ocx-site check --dist dist",
     "lighthouse": "node scripts/lighthouse.mjs"
   },
