@@ -65,15 +65,37 @@ do_on_create() {
     run_checked 'config setup' "$OCXF_BIN" config setup --managed-config "$OCXF_MANAGED_CONFIG"
 }
 
+# project_dir: the directory of the project ocx will use: OCX_PROJECT (a directory or a file) when set,
+# else the nearest ocx.toml. Printed even when it does not exist.
+project_dir() {
+    if [ -z "${OCX_PROJECT:-}" ]; then
+        nearest_toml
+    elif [ -d "$OCX_PROJECT" ]; then
+        printf '%s\n' "$OCX_PROJECT"
+    else
+        dirname -- "$OCX_PROJECT"
+    fi
+}
+
+# foreign_owned <dir>: succeed when the project, its lock, its store or an OCX_PROJECT file belongs to a non-root user.
+foreign_owned() {
+    for __p in "$1" "$1/ocx.lock" "$1/.ocx" "${OCX_PROJECT:-}"; do
+        { [ -n "$__p" ] && [ -e "$__p" ]; } || continue
+        __o=$(owner_uid "$__p")
+        [ "$__o" = 0 ] || return 0
+    done
+    return 1
+}
+
 do_update_content() {
     [ "${OCXF_PULL:-0}" = 1 ] || return 0
-    __proj=$(nearest_toml)
+    __proj=$(project_dir)
     __uid=${__OCXF_TESTING_UID:-$(id -u)}
     # No project anywhere above: ocx would only print its own "no ocx.toml" error, so stay silent.
-    if [ -z "$__proj" ] && [ -z "${OCX_PROJECT:-}" ]; then return 0; fi
-    __owner=
-    [ -z "$__proj" ] || __owner=$(owner_uid "$__proj")
-    if [ -n "$__proj" ] && [ "$__uid" = 0 ] && [ "$__owner" != 0 ]; then
+    [ -n "$__proj" ] || return 0
+    # Root must not take over a foreign checkout: ocx would write ocx.lock and the toolchain links there.
+    # shellcheck disable=SC2310 # the predicate's status is the answer, set -e is not wanted inside it
+    if [ "$__uid" = 0 ] && foreign_owned "$__proj"; then
         warn "not pulling: $__proj is owned by another user and this hook runs as root, which would take over ocx.lock and the toolchain links; run ocx pull as that user"
         return 0
     fi

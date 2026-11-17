@@ -224,3 +224,45 @@ warnings() { printf '%s\n' "$output" | grep -c 'warning:' || true; }
     assert_success
     assert_output ""
 }
+
+# stat_stub_owner <uid> <path-glob>: stat reports uid for paths matching the glob, 0 for the rest.
+stat_stub_owner() {
+    stub stat "case \"\$*\" in $2) echo $1 ;; *) echo 0 ;; esac"
+}
+
+@test "S2 root with OCX_PROJECT naming a foreign directory does not pull, with no toml above cwd" {
+    as_uid 0
+    OCX_PROJECT=$WS hook update-content "$SANDBOX/none"
+    assert_success
+    [ "$(warnings)" = 1 ]
+    assert_output --partial 'not pulling'
+    refute_stub_called "ocx pull"
+}
+
+@test "S2 root with OCX_PROJECT naming a foreign project file does not pull" {
+    as_uid 0
+    OCX_PROJECT=$WS/ocx.toml hook update-content "$SANDBOX/none"
+    assert_output --partial 'not pulling'
+    refute_stub_called "ocx pull"
+}
+
+@test "S2 root skips a project whose ocx.lock or .ocx belongs to another user" {
+    as_uid 0
+    : >"$WS/ocx.lock"
+    stat_stub_owner 1000 '*ocx.lock*'
+    hook update-content
+    assert_output --partial 'not pulling'
+    refute_stub_called "ocx pull"
+    rm "$WS/ocx.lock"
+    mkdir "$WS/.ocx"
+    stat_stub_owner 1000 '*/.ocx'
+    OCX_PROJECT=$WS hook update-content "$SANDBOX/none"
+    assert_output --partial 'not pulling'
+    refute_stub_called "ocx pull"
+}
+
+@test "S2 root pulls when the project directory is root-owned and holds no foreign lock or store" {
+    as_uid 0
+    OCX_PROJECT=/ hook update-content "$SANDBOX/none"
+    assert_stub_called "ocx pull"
+}
