@@ -2,7 +2,6 @@
   "name": "devcontainer-features-site",
   "private": true,
   "type": "module",
-  "//": "shortcut: @ocx-sh/theme is pinned to the unreleased claim commit of ocx-sh/website#53 (/integrations/devcontainer/); move to the released version once #53 is merged and released, and drop its allowBuilds key in pnpm-workspace.yaml.",
   "scripts": {
     "dev": "astro dev --host",
     "build": "astro build",
@@ -12,7 +11,7 @@
   },
   "dependencies": {
     "@astrojs/starlight": "0.42.4",
-    "@ocx-sh/theme": "github:ocx-sh/website#757ad4b8ca496013269fa2a2a65b6022200c4023&path:/packages/theme",
+    "@ocx-sh/theme": "0.7.0",
     "astro": "7.3.5"
   },
   "devDependencies": {

@@ -1,8 +1,8 @@
 allowBuilds:
   esbuild: true
   sharp: true
-  # shortcut: theme pinned to the unreleased claim commit of ocx-sh/website#53 (the /integrations/devcontainer/ claim); move to the released @ocx-sh/theme once #53 is merged and released, and drop this key.
-  '@ocx-sh/theme@https://codeload.github.com/ocx-sh/website/tar.gz/757ad4b8ca496013269fa2a2a65b6022200c4023#path:/packages/theme': true
+minimumReleaseAgeExclude:
+  - '@ocx-sh/theme@0.7.0'
 # shortcut: pagefind held at the theme's tested version (ocx-site check C-070 and the deploy action abort on a mismatch); Starlight's ^1.5.2 resolves to 1.6.0. Drop when the released theme tests a newer Pagefind.
 overrides:
   pagefind: 1.5.2
