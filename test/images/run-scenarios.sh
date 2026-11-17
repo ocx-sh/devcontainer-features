@@ -189,7 +189,6 @@ built=
 cleanup_all() {
     for b in $built; do docker rmi -f "$b" >/dev/null 2>&1 || :; done
     rm -rf target/scenarios
-    rmdir target/cli-tmp 2>/dev/null || :
     rmdir target/run 2>/dev/null || :
 }
 trap cleanup_all EXIT
