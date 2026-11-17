@@ -7,8 +7,7 @@ description: Add the ocx Dev Container Feature with one line in devcontainer.jso
 
 The ocx Dev Container Feature installs the `ocx` command-line tool in a dev container and restores the tools your project pins in `ocx.toml`.
 
-<!-- doc: index-feature-line -->
-```jsonc-run
+```jsonc
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -16,6 +15,7 @@ The ocx Dev Container Feature installs the `ocx` command-line tool in a dev cont
   }
 }
 ```
+<!-- doc: index-feature-line -->
 
 ## Add ocx with one line {#add-one-line}
 
