@@ -1,0 +1,32 @@
+{
+  "fail-invalid-option": {
+    "image": "debian:stable-slim",
+    "options": { "pull": "maybe" },
+    "exit": 2,
+    "message": "option pull must be true or false (got: maybe)"
+  },
+  "fail-invalid-version": {
+    "image": "debian:stable-slim",
+    "options": { "version": "1.2" },
+    "exit": 2,
+    "message": "option version must be pinned, latest or X.Y.Z (got: 1.2)"
+  },
+  "fail-unknown-version": {
+    "image": "debian:stable-slim",
+    "options": { "version": "9.9.9" },
+    "exit": 2,
+    "message": "no ocx 9.9.9 build for"
+  },
+  "fail-libc-gnu-alpine": {
+    "image": "alpine:3",
+    "options": { "libc": "gnu" },
+    "exit": 7,
+    "message": "libc: gnu needs glibc 2.28 or newer, which this image does not have"
+  },
+  "fail-ca-bundle-missing": {
+    "image": "debian:stable-slim",
+    "options": { "caBundle": "/no/such/bundle.pem" },
+    "exit": 2,
+    "message": "option caBundle is not a readable file: /no/such/bundle.pem"
+  }
+}
