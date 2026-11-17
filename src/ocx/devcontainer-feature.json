@@ -57,7 +57,7 @@
     "consentPaths": {
       "type": "string",
       "default": "/workspaces/*",
-      "description": "Colon-separated paths whose projects activate without a prompt. Empty means every project asks first."
+      "description": "Colon-separated absolute paths. A project there activates in new shells and ocx grants consent without a prompt. A trailing /* covers the path and below. Empty activates nothing."
     },
     "pull": {
       "type": "boolean",
@@ -67,12 +67,12 @@
     "pullGroups": {
       "type": "string",
       "default": "",
-      "description": "Comma-separated tool groups to restore. Empty restores the default group only."
+      "description": "Comma-separated tool groups to restore and to put on PATH in new shells. Empty means the default group only."
     },
     "shellActivation": {
       "type": "boolean",
       "default": true,
-      "description": "Put the project toolchain on PATH in new shells."
+      "description": "Put the project toolchain on PATH in new interactive shells, for projects under consentPaths only."
     }
   },
   "installsAfter": ["ghcr.io/devcontainers/features/common-utils"],
