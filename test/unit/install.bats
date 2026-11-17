@@ -538,6 +538,26 @@ b"; do
     done
 }
 
+@test "S4 control characters in a string option exit 2 naming the option" {
+    esc=$(printf '\033') tab=$(printf '\t') cr=$(printf '\r') del=$(printf '\177') nl='
+'
+    root_file "/etc/ca${esc}.pem" x
+    CABUNDLE="/etc/ca${esc}.pem" assert_bad_option "option caBundle"
+    CONSENTPATHS="/srv/a${tab}b" assert_bad_option "option consentPaths"
+    for c in "$esc" "$tab" "$cr" "$del" "$nl"; do
+        OCXHOME="/h${c}x" assert_bad_option "option ocxHome"
+        INSTALLDIR="/i${c}x" assert_bad_option "option installDir"
+        CABUNDLE="/c${c}x" assert_bad_option "option caBundle"
+        CONSENTPATHS="/p${c}x" assert_bad_option "option consentPaths"
+        DISTURL="https://d.test/${c}x" assert_bad_option "option distUrl"
+        MIRRORURL="https://m.test/${c}x" assert_bad_option "option mirrorUrl"
+        MANAGEDCONFIG="a${c}b" assert_bad_option "option managedConfig"
+        PULLGROUPS="a${c}b" assert_bad_option "option pullGroups"
+        LIBC="musl${c}" assert_bad_option "option libc"
+        VERSION="1.2.3${c}" assert_bad_option "option version"
+    done
+}
+
 # --- manifest / script parity ------------------------------------------------
 
 @test "every manifest option is read by the script and no other option is" {
