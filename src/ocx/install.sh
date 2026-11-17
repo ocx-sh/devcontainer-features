@@ -34,6 +34,7 @@ OCXF_WGET_HTTPS_ONLY=0
 OCXF_WGET_TLS12=0
 OCXF_WGET_CACERT=0
 OCXF_WGET_TIMEOUT=0
+OCXF_WGET_SHOW=0
 OCXF_TLS_UNVALIDATED=0
 OCXF_HASH_TOOL=
 
@@ -381,8 +382,10 @@ probe_downloader() {
     case "$ocxf_help" in *--ca-certificate*) OCXF_WGET_CACERT=1 ;; esac
     if [ "$OCXF_WGET_BUSYBOX" = 1 ]; then
         case "$ocxf_help" in *'-T SEC'*) OCXF_WGET_TIMEOUT=1 ;; esac
+        case "$ocxf_help" in *'Show server response'*) OCXF_WGET_SHOW=1 ;; esac
     else
         case "$ocxf_help" in *--timeout*) OCXF_WGET_TIMEOUT=1 ;; esac
+        case "$ocxf_help" in *--server-response*) OCXF_WGET_SHOW=1 ;; esac
     fi
     if [ "$OCXF_WGET_BUSYBOX" = 1 ]; then
         warn "BusyBox wget: no TLS floor and the server certificate may go unchecked; install curl for a verified download"
@@ -416,19 +419,20 @@ download_once() {
     elif [ "$OCXF_WGET_TIMEOUT" = 1 ]; then
         set -- "$@" --timeout=30 --tries=1 # --tries: the retry loop above is the only one
     fi
-    if [ "$OCXF_WGET_BUSYBOX" != 1 ]; then
-        wget "$@" "$ocxf_url"
-        return
-    fi
-    # BusyBox says on stderr when it skips certificate validation; that decides whether a
-    # rolling manifest may be trusted.
+    [ "$OCXF_WGET_SHOW" = 0 ] || set -- "$@" -S
+    # The stderr text decides two things. GNU and BusyBox wget follow an https to http redirect (--https-only
+    # does not stop it), and -S prints every Location header; BusyBox also says when it skips certificate
+    # validation, which decides whether a rolling manifest may be trusted.
     ocxf_st=0
     wget "$@" "$ocxf_url" 2>"$ocxf_dest.err" || ocxf_st=$?
-    cat "$ocxf_dest.err" >&2
+    [ "$ocxf_st" = 0 ] || cat "$ocxf_dest.err" >&2
     if grep -q 'certificate validation not implemented' "$ocxf_dest.err"; then
         OCXF_TLS_UNVALIDATED=1
     fi
+    ocxf_loc=$(sed -n 's/^[[:space:]]*[Ll][Oo][Cc][Aa][Tt][Ii][Oo][Nn]:[[:space:]]*//p' "$ocxf_dest.err" | tr -d '\r' |
+        grep -i '^[a-z][a-z0-9+.-]*:' | grep -v -i "^https://" | head -1)
     rm -f "$ocxf_dest.err"
+    [ -z "$ocxf_loc" ] || err "refusing a redirect to a non-https URL: $ocxf_loc (from $ocxf_url)" 3
     return "$ocxf_st"
 }
 
