@@ -169,5 +169,4 @@ The binary then runs only through its full path, `/opt/ocx/bin/ocx version`.
 
 - [Add ocx to a dev container](../quickstart.md) is the first-run walk-through.
 - [Pin or upgrade the ocx version](pin-or-upgrade-version.md) sets the ocx version on any image.
-- [Supported images](../reference/supported-images.md) covers the unsupported cases, including bare BusyBox.
 - [Fix a failed feature install](../troubleshooting/install-errors.md#missing-prerequisite) matches the missing-tool message to its fix.

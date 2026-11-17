@@ -154,4 +154,3 @@ If a step fails, see [Fix a failed feature install](../troubleshooting/install-e
 
 - [Install from a mirror or with no internet](./mirror-and-air-gapped.md) for a network that cannot reach GitHub at all.
 - [Apply organisation-managed configuration](./managed-config.md) to roll these settings out to every container.
-- [Options](../reference/options.md#opt-caBundle) describes `caBundle` and the other options used here.

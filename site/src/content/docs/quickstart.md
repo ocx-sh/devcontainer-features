@@ -68,7 +68,7 @@ jq = "ocx.sh/jqlang/jq:1.8"
 ```
 
 The command `ocx exec -- <command>` always finds the project tools.
-A terminal that starts after the add inside a project under `/workspaces` also has them on its path, so `jq` runs without the prefix there.
+A terminal that starts after the add inside a project under `/workspaces` also has them on its `PATH`, so `jq` runs without the prefix there.
 That default comes from the [`consentPaths`](reference/options.md#opt-consentPaths) option.
 
 ## Commit the project files {#commit}

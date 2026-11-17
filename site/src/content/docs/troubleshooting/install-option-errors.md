@@ -11,7 +11,7 @@ Find that line below.
 Every entry shows the message as the build prints it, the cause, and the fix.
 
 For a download, checksum or platform failure, see [Fix a failed feature install](./install-errors.md).
-[Install exit codes](../reference/environment-and-files.md#exit-codes) lists every code, and [Options](../reference/options.md) lists the allowed values.
+[Install exit codes](../reference/environment-and-files.md#exit-codes) lists every code.
 
 ## Error: no ocx build for that version {#version-not-found}
 

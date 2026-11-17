@@ -22,7 +22,7 @@ The warning names an exit code:
 | 78 | `ocx.lock` is missing, or a package has no build for this platform |
 
 For a failed image build, see [Fix a failed feature install](./install-errors.md). For a skipped restore, a managed configuration warning or a package with no build for the platform, see [Fix a restore warning](./restore-warnings.md). For a tool that is missing from the terminal, see [Fix a tool missing from the terminal](./shell-activation-errors.md).
-[Lifecycle commands](../reference/environment-and-files.md#lifecycle) say when each warning appears, and [Install exit codes](../reference/environment-and-files.md#exit-codes) lists the build codes.
+[Install exit codes](../reference/environment-and-files.md#exit-codes) lists the build codes.
 
 ## Error: ocx.lock not found {#lock-missing}
 

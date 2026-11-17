@@ -1,6 +1,6 @@
 ---
 title: Pin or upgrade the ocx version
-description: Choose which ocx version the feature installs, with the default pin, an exact version, the current release or a frozen feature tag.
+description: Choose which ocx version the feature installs, with the default pin, an exact version, every new release or a frozen feature tag.
 sidebar:
   order: 1
 ---
@@ -66,7 +66,7 @@ An older version such as `0.4.2` stops the build with exit code 2 before any dow
 ocx-feature: error: ocx 0.4.2 ships as ocx-x86_64-unknown-linux-musl.tar.xz; this feature installs .tar.gz releases only. The oldest x86_64-unknown-linux-musl .tar.gz build is 0.4.3: set version to 0.4.3 or newer
 ```
 
-## Follow the current release {#latest}
+## Follow every new release {#latest}
 
 Set `version` to `latest`.
 The build reads the live release manifest from `setup.ocx.sh` and installs the highest stable release.
@@ -135,5 +135,4 @@ Both commands print the same version, for example `0.6.7` after the exact pin ab
 - [Add ocx to a dev container](../quickstart.md) is the first-run walk-through.
 - [Use ocx on a minimal base image](minimal-images.md) covers images without the usual tools.
 - [Changelog](../changelog.md) lists the ocx version each feature release pins.
-- [Options](../reference/options.md#opt-version) describes `version` and every other option.
 - [Fix a rejected option or version](../troubleshooting/install-option-errors.md) matches each version error to its fix.

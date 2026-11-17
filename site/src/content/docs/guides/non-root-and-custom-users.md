@@ -135,5 +135,4 @@ The `~/.ocx` directory exists once ocx has run a command that needs it, such as 
 
 - [Restore the project toolchain on create](restore-toolchain.md) describes the restore and its warnings.
 - [Use ocx on a minimal base image](minimal-images.md) covers images with few tools.
-- [Options](../reference/options.md#opt-ocxHome) describes `ocxHome`, the option for one store shared by all users.
 - [Fix a restore warning](../troubleshooting/restore-warnings.md#root-owned) explains the root warning in detail.

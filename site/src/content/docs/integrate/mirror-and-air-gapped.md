@@ -162,6 +162,5 @@ Tool packages come from the registries in `ocx.toml`, and this feature does not 
 
 - [How the install works](../concepts/how-the-install-works.md#verification) explains the checksum check in detail.
 - [What the feature trusts](../concepts/trust-model.md#install) says which options depend on a web endpoint.
-- [Options](../reference/options.md#opt-mirrorUrl) describes `mirrorUrl` and `distUrl`.
 - [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) for a network that allows GitHub only through a proxy.
 - [Fix a failed feature install](../troubleshooting/install-errors.md) when the build stops with exit code 3 or 4.
