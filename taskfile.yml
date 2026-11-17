@@ -41,6 +41,7 @@ tasks:
         vars: {IMAGE: debian}
       - task: test:image
         vars: {IMAGE: alpine}
+      - task: release:rehearse
 
   ci:build:
     desc: Build
