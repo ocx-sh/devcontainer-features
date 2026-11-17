@@ -330,7 +330,7 @@ ensure_prereqs() {
     [ -n "$OCXF_MISSING" ] || return 0
     say "installing missing prerequisites:$OCXF_MISSING"
     # shellcheck disable=SC2086 # OCXF_PKGS is a space-separated package list
-    pm_run $OCXF_PKGS || err "missing:$OCXF_MISSING, and no supported package manager was found; install them in the base image" 2
+    pm_run $OCXF_PKGS || err "missing:$OCXF_MISSING, and no supported package manager was found; install them in the base image$(ca_hint)" 2
     scan_prereqs
     [ -z "$OCXF_MISSING" ] || err "still missing after the install:$OCXF_MISSING; install them in the base image$(ca_hint)" 2
 }
