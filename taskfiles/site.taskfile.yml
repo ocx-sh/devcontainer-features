@@ -32,10 +32,17 @@ tasks:
     cmds:
       - "{{.OCX}} pnpm run build"
 
-  site:docs:
-    desc: Run the docs-quality checks over the pages (declaration, prose, page type, landing, examples, raw links)
+  site:docs:generate:
+    desc: Regenerate the generated regions of the reference pages and the changelog page from their sources
     dir: site
     cmds:
+      - "{{.OCX}} node scripts/generate-docs.mjs"
+
+  site:docs:
+    desc: Check the generated regions are current, then run the docs-quality checks over the pages (declaration, prose, page type, landing, examples, raw links)
+    dir: site
+    cmds:
+      - "{{.OCX}} node scripts/generate-docs.mjs --check"
       - for: [doc_declaration, prose, page_type, landing_check, doc_examples, links_raw]
         # uv finds or fetches the Python 3.11 the checks need; each check exits 1 on a finding.
         cmd: "{{.OCX}} uv run --no-project --quiet --python '>=3.11' python {{.CHECKS}}/{{.ITEM}}.py --root src/content/docs"

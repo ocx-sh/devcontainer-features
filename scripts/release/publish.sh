@@ -46,7 +46,7 @@ fi
 # A job-scoped Basic header: the token never lands in .git/config or in the remote URL.
 hdr="http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN:?}" | base64 | tr -d '\n')"
 
-git add -A -- src CHANGELOG.md
+git add -A -- src CHANGELOG.md site/src/content/docs
 if ! git diff --cached --quiet; then
     git -c user.name=github-actions[bot] -c user.email=41898282+github-actions[bot]@users.noreply.github.com \
         commit -q -m "chore(release): ocx $OCX_VERSION, feature $v"

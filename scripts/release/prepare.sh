@@ -5,8 +5,8 @@
 # prepare.sh: build the release tree. With CHANGED=true it refreshes the vendored manifest, bumps the
 # feature patch version, regenerates the README, checks the installer parity table and records the
 # release in CHANGELOG.md; always it makes sure CHANGELOG.md has an entry for the feature version.
-# The result is release-tree/tree.patch, a patch of src/ and CHANGELOG.md that the test and publish jobs apply to a clean checkout.
-# Repo tooling: needs git, jq; runs under `pnpm exec` so the pinned devcontainer CLI is on PATH.
+# The result is release-tree/tree.patch, a patch of src/, CHANGELOG.md and the generated docs pages that the test and publish jobs apply to a clean checkout.
+# Repo tooling: needs git, jq, node; runs under `pnpm exec` so the pinned devcontainer CLI is on PATH.
 # env: CHANGED          "true" when the manifest digest differs (from detect.sh)
 #      OUT_DIR          where tree.patch goes (default release-tree)
 #      GITHUB_OUTPUT, GITHUB_STEP_SUMMARY   written when set
@@ -61,8 +61,13 @@ $note
     mv CHANGELOG.md.new CHANGELOG.md
 fi
 
+# The changelog page of the docs site is generated from CHANGELOG.md; the docs check fails on a stale page.
+if [ -f site/scripts/generate-docs.mjs ]; then
+    (cd site && node scripts/generate-docs.mjs)
+fi
+
 mkdir -p "$out"
-git add -A -- src CHANGELOG.md
+git add -A -- src CHANGELOG.md site/src/content/docs
 git diff --cached --binary HEAD >"$out/tree.patch"
 # An unchanged tree still yields a non-empty artifact, so the upload never sees a zero-byte file only.
 printf 'feature %s\nocx %s\nold_ocx %s\n' "$feature" "$ocx" "$old_ocx" >"$out/release.txt"

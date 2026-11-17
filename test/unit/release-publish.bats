@@ -25,7 +25,7 @@ setup() {
     run_tool "$PUB"
     assert_success
     run grep -n -e '^git' -e '^docker' -e '^devcontainer' -e '^verify' "$STUB_LOG"
-    assert_line --index 0 --partial "git add -A -- src CHANGELOG.md"
+    assert_line --index 0 --partial "git add -A -- src CHANGELOG.md site/src/content/docs"
     assert_line --index 1 --partial "git diff --cached --quiet"
     assert_line --index 2 --partial "commit -q -m chore(release): ocx 0.7.0, feature 1.0.1"
     assert_line --index 3 --partial "push origin HEAD:refs/heads/main"
