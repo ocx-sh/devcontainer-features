@@ -66,7 +66,12 @@ cleanup_run() {
         grep -o 'container-features-test/[0-9][0-9]*' "$__log" | sort -u | sed 's|.*/||' | while read -r __e; do
             docker ps -aq --filter "label=devcontainer.local_folder=/tmp/devcontainercli/container-features-test/$__e" | xargs -r docker rm -f >/dev/null 2>&1 || :
             docker image ls -q --filter "reference=vsc-$__e-*" | sort -u | xargs -r docker rmi -f >/dev/null 2>&1 || :
-            rm -rf "/tmp/devcontainercli/container-features-test/$__e"
+            # a scenario that ran as root may leave root-owned files in the bind-mounted work dir
+            __w=/tmp/devcontainercli/container-features-test/$__e
+            rm -rf "$__w" 2>/dev/null || {
+                docker run --rm -v "$__w:/w" --entrypoint sh alpine:3 -c 'rm -rf /w/* /w/.[!.]*' >/dev/null 2>&1 || :
+                rm -rf "$__w" || :
+            }
         done
     done
     unset __log

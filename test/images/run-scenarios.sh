@@ -11,7 +11,7 @@
 # Each scenario runs from a staged copy under target/scenarios/<name>/ (one scenario in
 # scenarios.json, src/ocx, its script), so a run never sees another's files.
 # Reports: target/reports/scenarios/<name>.log, target/reports/junit/scenarios-<name>.xml.
-# Run from the repo root inside `ocx exec -g all --` (the test:scenarios task does).
+# Run from the repo root inside `ocx exec -g all --` (the test:scenarios task does); needs jq.
 # Exit: 0 all passed, 1 a scenario failed, 2 usage.
 # shellcheck disable=SC2310,SC2016 # run_locked and judge are tried in conditions on purpose; command text is for the inner shell
 set -eu
@@ -29,7 +29,7 @@ export JUNIT_KIND
 
 # json_keys <file>: the top-level keys, one per line.
 json_keys() {
-    node -e 'console.log(Object.keys(JSON.parse(require("fs").readFileSync(process.argv[1]))).join("\n"))' "$1"
+    jq -r 'keys_unsorted[]' "$1"
 }
 
 all_names() {
@@ -60,21 +60,16 @@ stage() {
             # the CLI wants a test script even for a scenario whose build is expected to fail
             printf '#!/bin/sh\nexit 0\n' >"$2/test/ocx/$1.sh"
             chmod +x "$2/test/ocx/$1.sh"
-            node -e '
-const fs = require("fs"), [name, out, tag] = process.argv.slice(1);
-const f = JSON.parse(fs.readFileSync("test/images/failures.json"))[name];
-fs.writeFileSync(out, JSON.stringify({ [name]: { image: f.image, features: { ocx: f.options } } }));' "$1" "$2/test/ocx/scenarios.json"
+            jq -c --arg n "$1" '{($n): {image: .[$n].image, features: {ocx: .[$n].options}}}' test/images/failures.json >"$2/test/ocx/scenarios.json"
             ;;
         *)
             cp "test/ocx/$1.sh" "$2/test/ocx/"
             [ ! -d "test/ocx/$1" ] || cp -R "test/ocx/$1" "$2/test/ocx/$1"
             [ "$1" != reinstall ] || cp -R src/ocx "$2/test/ocx/feature-src"
             printf '%s\n' "$digest" >"$2/test/ocx/dist-digest.expected"
-            node -e '
-const fs = require("fs"), [name, out, digest, run] = process.argv.slice(1);
-const s = JSON.parse(fs.readFileSync("test/ocx/scenarios.json"))[name];
-const t = JSON.stringify({ [name]: s }).replace(/@DIST_DIGEST@/g, digest).replace(/(ocx-test\/[a-z-]+):local/g, "$1:scn-" + run);
-fs.writeFileSync(out, t);' "$1" "$2/test/ocx/scenarios.json" "$digest" "$RUN_ID"
+            jq -c --arg n "$1" --arg d "$digest" --arg r "$RUN_ID" '
+                {($n): .[$n]} | walk(if type == "string" then gsub("@DIST_DIGEST@"; $d) | gsub("(?<p>ocx-test/[a-z-]+):local"; "\(.p):scn-\($r)") else . end)' \
+                test/ocx/scenarios.json >"$2/test/ocx/scenarios.json"
             ;;
     esac
 }
@@ -116,7 +111,7 @@ one() {
 judge() {
     case $name in
         fail-*)
-            want=$(node -e 'const f=JSON.parse(require("fs").readFileSync("test/images/failures.json"))[process.argv[1]];console.log(f.exit+"\n"+f.message)' "$name")
+            want=$(jq -r --arg n "$name" '.[$n] | "\(.exit)\n\(.message)"' test/images/failures.json)
             code=$(printf '%s\n' "$want" | sed -n 1p)
             msg=$(printf '%s\n' "$want" | sed -n 2p)
             bad=0
@@ -202,7 +197,7 @@ trap 'exit 143' TERM
 # Local base images (ocx-test/*) of the selected scenarios, built once under a tag only this run owns.
 for n in $names; do
     case $n in fail-* | duplicate | up-proof) continue ;; esac
-    img=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("test/ocx/scenarios.json"))[process.argv[1]].image)' "$n")
+    img=$(jq -r --arg n "$n" '.[$n].image' test/ocx/scenarios.json)
     case $img in
         ocx-test/*:local)
             tag=$(image_tag "$img")
