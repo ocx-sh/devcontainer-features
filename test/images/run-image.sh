@@ -35,18 +35,17 @@ image_line() {
 
 # run_locked <log> <command...>: a devcontainer CLI run, output to the log.
 # The CLI names its working directory after Date.now(), so two runs started in the same millisecond
-# collide (EEXIST). Starts are spaced by a lock held for the first second of each run.
+# work directory $TMPDIR/devcontainercli/container-features-test/<Date.now()> is created with mkdir -p,
+# so two runs started in the same millisecond silently SHARE it and overwrite each other's config.
+# Every run therefore gets a TMPDIR of its own (os.tmpdir() honours it): no timing can make two runs
+# meet. The directory is named in the log, which is how cleanup_run finds it.
 run_locked() {
-    mkdir -p "$OUT/images"
-    __lock=$OUT/images/.start.lock
     __log=$1
     shift
-    until mkdir "$__lock" 2>/dev/null; do sleep 0.3; done
-    "$@" >"$__log" 2>&1 &
-    __pid=$!
-    sleep 1.2
-    rmdir "$__lock"
-    wait "$__pid"
+    mkdir -p "$OUT/images" "${OCXF_CLI_TMP_ROOT:-target/cli-tmp}"
+    __t=$(mktemp -d "$(cd "${OCXF_CLI_TMP_ROOT:-target/cli-tmp}" && pwd)/run.XXXXXX")
+    printf '%s\n' "$__t" >"$__log.tmpdir"
+    TMPDIR=$__t "$@" >"$__log" 2>&1
 }
 
 # run_cli <log> <image ref>: the devcontainer CLI test of the feature on one base image.
@@ -57,24 +56,27 @@ run_cli() {
     run_locked "$1" $DC features test -p . -f ocx --skip-scenarios --skip-duplicated --preserve-test-containers -i "$2"
 }
 
-# cleanup_run <log>...: remove what the CLI runs named in the logs left behind. Every run works in
-# /tmp/devcontainercli/container-features-test/<epoch> and names its images vsc-<epoch>-*, so parallel
-# runs never touch each other's.
+# cleanup_run <log>...: remove exactly what the runs behind these logs created: containers labelled
+# with the run's own work directory, the images the log says were built (`naming to ...`), and the
+# run's private TMPDIR (named run.XXXXXX under target/cli-tmp, taken from the work directory path in the log).
 cleanup_run() {
     for __log in "$@"; do
         [ -f "$__log" ] || continue
-        grep -o 'container-features-test/[0-9][0-9]*' "$__log" | sort -u | sed 's|.*/||' | while read -r __e; do
-            docker ps -aq --filter "label=devcontainer.local_folder=/tmp/devcontainercli/container-features-test/$__e" | xargs -r docker rm -f >/dev/null 2>&1 || :
-            docker image ls -q --filter "reference=vsc-$__e-*" | sort -u | xargs -r docker rmi -f >/dev/null 2>&1 || :
-            # a scenario that ran as root may leave root-owned files in the bind-mounted work dir
-            __w=/tmp/devcontainercli/container-features-test/$__e
-            rm -rf "$__w" 2>/dev/null || {
-                docker run --rm -v "$__w:/w" --entrypoint sh alpine:3 -c 'rm -rf /w/* /w/.[!.]*' >/dev/null 2>&1 || :
-                rm -rf "$__w" || :
-            }
+        grep -o '[^ "=]*/run\.[A-Za-z0-9]*/devcontainercli/container-features-test/[0-9]*' "$__log" | sort -u | while read -r __w; do
+            docker ps -aq --filter "label=devcontainer.local_folder=$__w" | xargs -r docker rm -f >/dev/null 2>&1 || :
         done
+        grep -o 'naming to docker.io/library/vsc-[^ ]*' "$__log" | sed 's|.*/library/||; s|:latest$||' | sort -u | xargs -r docker rmi -f >/dev/null 2>&1 || :
+        [ ! -f "$__log.tmpdir" ] || while read -r __t; do
+            case $__t in */run.*) ;; *) continue ;; esac
+            # a scenario that ran as root may leave root-owned files in the bind-mounted work dir
+            rm -rf "$__t" 2>/dev/null || {
+                docker run --rm -v "$__t:/w" --entrypoint sh alpine:3 -c 'rm -rf /w/* /w/.[!.]*' >/dev/null 2>&1 || :
+                rm -rf "$__t" || :
+            }
+        done <"$__log.tmpdir"
+        rm -f "$__log.tmpdir"
     done
-    unset __log
+    unset __log __w __t
 }
 
 # junit <alias> <log> <rc> <extra cases file>: JUnit XML from the ok / not ok lines of the log.

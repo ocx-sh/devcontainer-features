@@ -13,6 +13,9 @@ here=$(cd "$(dirname "$0")" && pwd)
 
 state=/usr/local/share/ocx-feature
 marker='Written by the ocx Dev Container Feature'
+# The runner stages one scenario per directory and writes its name to scenario.name. A script that
+# finds another name is running in someone else's workspace (a mixed-up run), and must not pass.
+check "this run was staged for scenario $(basename "$0" .sh)" test "$(cat "$here/scenario.name" 2>/dev/null)" = "$(basename "$0" .sh)"
 # The workspace folder: scenario projects live under it, where the default consentPaths grant consent.
 workspace=$here
 # The workspace is a bind mount of a host directory: files a root script leaves there cannot be

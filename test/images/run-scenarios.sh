@@ -53,6 +53,7 @@ stage() {
     mkdir -p "$2/src" "$2/test/ocx"
     cp -R src/ocx "$2/src/ocx"
     cp test/ocx/check.sh test/ocx/scenario.sh "$2/test/ocx/"
+    printf '%s\n' "$1" >"$2/test/ocx/scenario.name"
     digest=$(awk '{ print $1; exit }' src/ocx/dist.json.sha256)
     case $1 in
         duplicate) cp test/ocx/duplicate.sh "$2/test/ocx/" ;;
@@ -188,6 +189,7 @@ built=
 cleanup_all() {
     for b in $built; do docker rmi -f "$b" >/dev/null 2>&1 || :; done
     rm -rf target/scenarios
+    rmdir target/cli-tmp 2>/dev/null || :
     rmdir target/run 2>/dev/null || :
 }
 trap cleanup_all EXIT
