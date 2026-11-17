@@ -28,6 +28,8 @@ IFS=. read -r maj min pat extra <<EOT
 $old
 EOT
 [ -n "$pat" ] && [ -z "$extra" ] || die "current version '$old' is not x.y.z"
+# $((08 + 1)) is an octal error in sh: refuse a component with a leading zero.
+case ".$old" in *.0[0-9]*) die "current version '$old' has a component with a leading zero" ;; esac
 case "$level" in
     major) new="$((maj + 1)).0.0" ;;
     minor) new="$maj.$((min + 1)).0" ;;

@@ -78,3 +78,20 @@ set_version() {
     run_tool "$BUMP" huge
     assert_failure 2
 }
+
+@test "a component with a leading zero is refused, never read as octal" {
+    for v in 1.2.08 01.2.3 1.02.3 1.2.007; do
+        set_version "$v"
+        before=$(cat "$JSON")
+        run_tool "$BUMP"
+        assert_failure 2
+        assert_output --partial "leading zero"
+        [ "$(cat "$JSON")" = "$before" ]
+    done
+}
+
+@test "a zero component alone is fine" {
+    set_version 1.0.9
+    run_tool "$BUMP"
+    assert_output "1.0.9 -> 1.0.10"
+}
