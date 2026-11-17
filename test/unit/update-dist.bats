@@ -25,7 +25,7 @@ publish() {
 
 # jq filter adding stable version $1 with every target the vendored newest version has.
 newver() {
-    printf '.latest.version="%s" | .releases = ([.releases[] | select(.version=="0.6.8") | .version="%s" | .tag="v%s" | .url=("%s/v%s/" + .filename) | .sha256=("%064d"|sub("0";"a"))] + .releases)' "$1" "$1" "$1" "$BASE_URL" "$1"
+    printf '.latest.version="%s" | .releases = ([.releases[] | select(.version=="0.6.8") | .version="%s" | .tag="v%s" | .url=("%s/v%s/" + .filename) | .sha256=("a"+("0"*63))] + .releases)' "$1" "$1" "$1" "$BASE_URL" "$1"
 }
 
 sums() { (cd "$R/src/ocx" && sha256sum dist.json dist.json.sha256); }
@@ -54,36 +54,33 @@ setup() {
 
 @test "only-older rows added updates without moving the pin" {
     publish '.releases += [(.releases[0] | .version="0.0.1" | .tag="v0.0.1" | .url=("'"$BASE_URL"'/v0.0.1/" + .filename))]'
-    export GITHUB_OUTPUT="$SANDBOX/out"
-    : >"$GITHUB_OUTPUT"
-    run_tool "$UPD" --from "$UP"
+    : >"$SANDBOX/out"
+    GITHUB_OUTPUT="$SANDBOX/out" run_tool "$UPD" --from "$UP"
     assert_success
     assert_output "updated 0.6.8 -> 0.6.8"
-    grep -Fx 'pin_changed=false' "$GITHUB_OUTPUT"
-    grep -Fx 'changed=true' "$GITHUB_OUTPUT"
+    grep -Fx 'pin_changed=false' "$SANDBOX/out"
+    grep -Fx 'changed=true' "$SANDBOX/out"
 }
 
 @test "GITHUB_OUTPUT carries changed, versions, pin_changed and digest" {
     publish "$(newver 0.6.9)"
-    export GITHUB_OUTPUT="$SANDBOX/out"
-    : >"$GITHUB_OUTPUT"
-    run_tool "$UPD" --from "$UP"
+    : >"$SANDBOX/out"
+    GITHUB_OUTPUT="$SANDBOX/out" run_tool "$UPD" --from "$UP"
     assert_success
-    grep -Fx 'changed=true' "$GITHUB_OUTPUT"
-    grep -Fx 'old_version=0.6.8' "$GITHUB_OUTPUT"
-    grep -Fx 'new_version=0.6.9' "$GITHUB_OUTPUT"
-    grep -Fx 'pin_changed=true' "$GITHUB_OUTPUT"
-    grep -Fx "digest=$(cut -d' ' -f1 "$UP/dist.json.sha256")" "$GITHUB_OUTPUT"
+    grep -Fx 'changed=true' "$SANDBOX/out"
+    grep -Fx 'old_version=0.6.8' "$SANDBOX/out"
+    grep -Fx 'new_version=0.6.9' "$SANDBOX/out"
+    grep -Fx 'pin_changed=true' "$SANDBOX/out"
+    grep -Fx "digest=$(cut -d' ' -f1 "$UP/dist.json.sha256")" "$SANDBOX/out"
 }
 
 @test "GITHUB_OUTPUT on unchanged says changed=false" {
-    export GITHUB_OUTPUT="$SANDBOX/out"
-    : >"$GITHUB_OUTPUT"
-    run_tool "$UPD" --from "$UP"
+    : >"$SANDBOX/out"
+    GITHUB_OUTPUT="$SANDBOX/out" run_tool "$UPD" --from "$UP"
     assert_success
-    grep -Fx 'changed=false' "$GITHUB_OUTPUT"
-    grep -Fx 'new_version=0.6.8' "$GITHUB_OUTPUT"
-    grep -Fx 'pin_changed=false' "$GITHUB_OUTPUT"
+    grep -Fx 'changed=false' "$SANDBOX/out"
+    grep -Fx 'new_version=0.6.8' "$SANDBOX/out"
+    grep -Fx 'pin_changed=false' "$SANDBOX/out"
 }
 
 @test "--check exits 10 on an update and writes nothing" {
@@ -237,6 +234,7 @@ guard() {
 }
 
 @test "fetch downloads manifest and sidecar from the base" {
+    # shellcheck disable=SC2016 # the stub body is expanded when the stub runs
     stub curl 'while [ $# -gt 0 ]; do case "$1" in -o) o=$2; shift;; esac; shift; done
 case "$o" in *.sha256) cp "$UPSTREAM/dist.json.sha256" "$o";; *) cp "$UPSTREAM/dist.json" "$o";; esac'
     UPSTREAM="$UP" OCXF_DIST_BASE="https://example.test" run_tool "$UPD"
