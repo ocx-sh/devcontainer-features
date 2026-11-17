@@ -7,7 +7,10 @@ setup() {
     ocxf_setup
     export OCXF_VERSION=0.6.8 OCXF_BIN="$STUB_DIR/ocx" OCXF_INSTALL_DIR=/usr/local/bin
     export OCXF_CA_BUNDLE='' OCXF_MANAGED_CONFIG='' OCXF_OCX_HOME='' OCXF_NO_UPDATE_CHECK=0
-    export OCXF_CONSENT_PATHS='' OCXF_PULL=1 OCXF_PULL_GROUPS='' OCXF_SHELL_ACTIVATION=1
+    WS="$SANDBOX/ws"
+    mkdir -p "$WS/sub"
+    : >"$WS/ocx.toml"
+    export OCXF_CONSENT_PATHS="$WS/*" OCXF_PULL=1 OCXF_PULL_GROUPS='' OCXF_SHELL_ACTIVATION=1
     PROFILE="$__OCXF_TESTING_ROOT/etc/profile.d/ocx.sh"
     stub ocx 'echo "export OCXTEST_ENV=composed"'
 }
@@ -23,16 +26,16 @@ sh_c() {
     run $OCXF_TEST_SH -c "$1"
 }
 
-# sh_i <code>: the same as an interactive shell.
+# sh_i <code>: the same as an interactive shell, started in $WS (a consented project) or $IN.
 sh_i() {
     # shellcheck disable=SC2086 # OCXF_TEST_SH is deliberately word-split
-    run $OCXF_TEST_SH -i -c "$1" 2>&1
+    run $OCXF_TEST_SH -i -c "cd \"\${IN:-$WS}\" || exit 9; $1" 2>&1
 }
 
 @test "header marker, no helper variable left, silent, under set -eu" {
     gen
     head -n 1 "$PROFILE" | grep -q 'id: ocx'
-    sh_i "set -eu; . '$PROFILE'; echo \"[\${__ocx_sh-unset}]\""
+    sh_i "set -eu; . '$PROFILE'; echo \"[\${__ocxf_sh-unset}]\""
     assert_success
     assert_output --partial '[unset]'
 }
@@ -121,4 +124,117 @@ sh_i() {
     OCXF_CA_BUNDLE=/etc/ca.pem gen
     sh_c ". '$PROFILE'; printf %s \"\$OCX_EXTRA_CA_CERTS\""
     assert_output '/etc/ca.pem'
+}
+
+# evil_stub: an ocx whose env output sets EVIL, to show activation never reached it.
+evil_stub() { stub ocx 'echo "export EVIL=1"'; }
+
+# project <dir>: a directory holding an ocx.toml.
+project() {
+    mkdir -p "$1"
+    : >"$1/ocx.toml"
+}
+
+@test "S1 a project outside consentPaths is never activated and ocx is not called" {
+    evil_stub
+    project "$SANDBOX/other"
+    gen
+    IN="$SANDBOX/other" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=unset'
+    run cat "$STUB_LOG"
+    assert_output ""
+}
+
+@test "S1 a project inside consentPaths is activated, also from a nested directory" {
+    evil_stub
+    gen
+    sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+    IN="$WS/sub" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+}
+
+@test "S1 empty consentPaths never activates" {
+    evil_stub
+    OCXF_CONSENT_PATHS='' gen
+    sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=unset'
+    run cat "$STUB_LOG"
+    assert_output ""
+}
+
+@test "S1 no ocx.toml anywhere: ocx is not called" {
+    mkdir -p "$SANDBOX/none"
+    OCXF_CONSENT_PATHS='/*' gen
+    IN="$SANDBOX/none" sh_i ". '$PROFILE'; echo ok"
+    assert_output --partial ok
+    run cat "$STUB_LOG"
+    assert_output ""
+}
+
+@test "S1 a consent pattern and a project path with a space" {
+    evil_stub
+    project "$SANDBOX/a b/ws/p q"
+    OCXF_CONSENT_PATHS="$SANDBOX/a b/ws/*" gen
+    IN="$SANDBOX/a b/ws/p q" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+}
+
+@test "S1 a newline in the working directory neither breaks nor widens the match" {
+    evil_stub
+    nl='
+'
+    project "$WS/x${nl}y"
+    project "$SANDBOX/ws2${nl}z"
+    gen
+    IN="$WS/x${nl}y" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+    IN="$SANDBOX/ws2${nl}z" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=unset'
+}
+
+@test "S1 pattern rules: dir/* covers the dir and below, a plain path only itself, a sibling prefix or other wildcard never" {
+    evil_stub
+    project "$SANDBOX/wsX"
+    project "$WS/sub/deep"
+    gen
+    IN="$SANDBOX/wsX" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=unset'
+    IN="$WS/sub/deep" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+    OCXF_CONSENT_PATHS="$WS" gen
+    IN="$WS/sub/deep" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=unset'
+    sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+    OCXF_CONSENT_PATHS="$SANDBOX/w*/*:$SANDBOX/*/ws" gen
+    sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=unset'
+}
+
+@test "S1 OCX_PROJECT decides, a directory or a file" {
+    evil_stub
+    project "$SANDBOX/other"
+    gen
+    OCX_PROJECT="$SANDBOX/other" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=unset'
+    IN="$SANDBOX/other" OCX_PROJECT="$WS" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+    IN="$SANDBOX/other" OCX_PROJECT="$WS/ocx.toml" sh_i ". '$PROFILE'; echo \"e=\${EVIL-unset}\""
+    assert_output --partial 'e=1'
+}
+
+@test "S1 no helper variable is left behind, in either branch" {
+    gen
+    sh_i ". '$PROFILE'; set | grep -c '^__ocxf_' || true"
+    assert_output --partial '0'
+    IN="$SANDBOX" sh_i ". '$PROFILE'; set | grep -c '^__ocxf_' || true"
+    assert_output --partial '0'
+}
+
+@test "S1 activation passes the pullGroups, so the restored groups are the ones on PATH" {
+    OCXF_PULL_GROUPS=ci,lint gen
+    sh_i ". '$PROFILE'"
+    run grep -c -e '^ocx --offline env --group=ci,lint --shell=' "$STUB_LOG"
+    assert_output 1
 }

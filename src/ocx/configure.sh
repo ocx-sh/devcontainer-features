@@ -92,29 +92,87 @@ ocxf_write_config() {
     unset __ocxf_conf __ocxf_ca __ocxf_paths
 }
 
-# ocxf_write_profile: /etc/profile.d/ocx.sh, sourced by login shells and the rc blocks.
+# ocxf_consent_arms: the OCXF_CONSENT_PATHS list as case arms, each literal quoted. ocx 0.6.8 grants a
+# plain path to itself and "dir/*" to dir and everything below; any other "*" grants nothing, so it is dropped.
+ocxf_consent_arms() {
+    __ocxf_rest="${OCXF_CONSENT_PATHS:-}:"
+    __ocxf_out=
+    while [ -n "$__ocxf_rest" ]; do
+        __ocxf_p=${__ocxf_rest%%:*}
+        __ocxf_rest=${__ocxf_rest#*:}
+        __ocxf_glob=0
+        case $__ocxf_p in
+            */\*) __ocxf_glob=1 __ocxf_p=${__ocxf_p%/\*} ;;
+        esac
+        case $__ocxf_p in
+            *'*'*) continue ;;
+        esac
+        while [ "${__ocxf_p%/}" != "$__ocxf_p" ]; do __ocxf_p=${__ocxf_p%/}; done
+        if [ "$__ocxf_glob" = 1 ]; then
+            __ocxf_arm="$(sh_quote "$__ocxf_p")/*" # an empty base must not match the empty "no project" answer
+            [ -z "$__ocxf_p" ] || __ocxf_arm="$(sh_quote "$__ocxf_p") | $__ocxf_arm"
+        elif [ -n "$__ocxf_p" ]; then
+            __ocxf_arm=$(sh_quote "$__ocxf_p")
+        else
+            continue
+        fi
+        __ocxf_out="${__ocxf_out:+$__ocxf_out | }$__ocxf_arm"
+    done
+    printf '%s\n' "$__ocxf_out"
+    unset __ocxf_rest __ocxf_out __ocxf_p __ocxf_glob __ocxf_arm
+}
+
+# ocxf_write_profile: /etc/profile.d/ocx.sh, sourced by login shells and the rc blocks. The activation
+# snippet runs ocx only when the nearest project lies under a consentPaths entry: ocx env itself
+# applies any project's [env] table without asking.
 ocxf_write_profile() {
     __ocxf_pf=$(rootpath /etc/profile.d/ocx.sh)
     mkdir -p "$(dirname "$__ocxf_pf")"
+    __ocxf_arms=$(ocxf_consent_arms)
+    __ocxf_groups=
+    [ -z "${OCXF_PULL_GROUPS:-}" ] || __ocxf_groups=" --group=$(sh_quote "$OCXF_PULL_GROUPS")"
     {
         printf '%s\n' "$OCXF_MARK"
         [ -z "${OCXF_OCX_HOME:-}" ] || printf 'export OCX_HOME=%s\n' "$(sh_quote "$OCXF_OCX_HOME")"
         [ "$OCXF_CA_ENV" != 1 ] || printf 'export OCX_EXTRA_CA_CERTS=%s\n' "$(sh_quote "$OCXF_CA_BUNDLE")"
-        if [ "${OCXF_SHELL_ACTIVATION:-0}" = 1 ]; then
+        if [ "${OCXF_SHELL_ACTIVATION:-0}" = 1 ] && [ -n "$__ocxf_arms" ]; then
             printf 'case $- in\n*i*)\n'
             printf '    if [ -x %s ]; then\n' "$(sh_quote "$OCXF_BIN")"
             # shellcheck disable=SC2016 # literal text of the generated profile, expanded when it is sourced
             printf '%s\n' \
-                '        if [ -n "${BASH_VERSION-}" ]; then __ocx_sh=bash' \
-                '        elif [ -n "${ZSH_VERSION-}" ]; then __ocx_sh=zsh' \
-                '        else __ocx_sh=sh; fi'
+                '        __ocxf_d=${OCX_PROJECT-}' \
+                '        if [ -n "$__ocxf_d" ]; then' \
+                '            [ -d "$__ocxf_d" ] || case $__ocxf_d in' \
+                '            */*) __ocxf_d=${__ocxf_d%/*}; [ -n "$__ocxf_d" ] || __ocxf_d=/ ;;' \
+                '            *) __ocxf_d=. ;;' \
+                '            esac' \
+                '        else' \
+                '            __ocxf_d=$(pwd -P 2>/dev/null && printf x) || __ocxf_d=x' \
+                '            __ocxf_d=${__ocxf_d%x}; __ocxf_d=${__ocxf_d%?}' \
+                '            while [ -n "$__ocxf_d" ] && [ ! -f "$__ocxf_d/ocx.toml" ]; do' \
+                '                if [ "$__ocxf_d" = / ]; then __ocxf_d=; else __ocxf_d=${__ocxf_d%/*}; [ -n "$__ocxf_d" ] || __ocxf_d=/; fi' \
+                '            done' \
+                '        fi'
             # shellcheck disable=SC2016 # literal text of the generated profile, expanded when it is sourced
-            printf '        eval "$(%s --offline env --shell="$__ocx_sh" 2>/dev/null)" || :\n' "$(sh_quote "$OCXF_BIN")"
-            printf '        unset __ocx_sh\n    fi\n    ;;\nesac\n'
+            printf '%s\n' \
+                '        if [ -n "$__ocxf_d" ]; then' \
+                '            __ocxf_d=$(cd -- "$__ocxf_d" 2>/dev/null && pwd -P && printf x) || __ocxf_d=x' \
+                '            __ocxf_d=${__ocxf_d%x}; __ocxf_d=${__ocxf_d%?}' \
+                '        fi' \
+                '        case $__ocxf_d in'
+            printf '        %s)\n' "$__ocxf_arms"
+            # shellcheck disable=SC2016 # literal text of the generated profile, expanded when it is sourced
+            printf '%s\n' \
+                '            if [ -n "${BASH_VERSION-}" ]; then __ocxf_sh=bash' \
+                '            elif [ -n "${ZSH_VERSION-}" ]; then __ocxf_sh=zsh' \
+                '            else __ocxf_sh=sh; fi'
+            # shellcheck disable=SC2016 # literal text of the generated profile, expanded when it is sourced
+            printf '            eval "$(%s --offline env%s --shell="$__ocxf_sh" 2>/dev/null)" || :\n' "$(sh_quote "$OCXF_BIN")" "$__ocxf_groups"
+            printf '            ;;\n        esac\n        unset __ocxf_d __ocxf_sh\n    fi\n    ;;\nesac\n'
         fi
     } >"$__ocxf_pf"
     chmod 644 "$__ocxf_pf"
-    unset __ocxf_pf
+    unset __ocxf_pf __ocxf_arms __ocxf_groups
 }
 
 # ocxf_resolve <path>: follow symlinks so the edit lands in the target and the link survives.

@@ -31,10 +31,10 @@ A check in the docs gate fails when this region and that file differ.
 | [`ocxHome`](#opt-ocxHome) | string | `""` | Any string | Sets OCX_HOME for all users. Empty keeps the default ~/.ocx for each user. |
 | [`installDir`](#opt-installDir) | string | `/usr/local/bin` | Any string | Directory that receives the ocx binary. It must be on PATH. |
 | [`noUpdateCheck`](#opt-noUpdateCheck) | boolean | `true` | `true`, `false` | Turn off the ocx update check, so the container makes no network call just to look for a new ocx. |
-| [`consentPaths`](#opt-consentPaths) | string | `/workspaces/*` | Any string | Colon-separated paths whose projects activate without a prompt. Empty means every project asks first. |
+| [`consentPaths`](#opt-consentPaths) | string | `/workspaces/*` | Any string | Colon-separated absolute paths. A project there activates in new shells and ocx grants consent without a prompt. A trailing /* covers the path and below. Empty activates nothing. |
 | [`pull`](#opt-pull) | boolean | `true` | `true`, `false` | Restore the project toolchain from ocx.toml when the container is created. |
-| [`pullGroups`](#opt-pullGroups) | string | `""` | Any string | Comma-separated tool groups to restore. Empty restores the default group only. |
-| [`shellActivation`](#opt-shellActivation) | boolean | `true` | `true`, `false` | Put the project toolchain on PATH in new shells. |
+| [`pullGroups`](#opt-pullGroups) | string | `""` | Any string | Comma-separated tool groups to restore and to put on PATH in new shells. Empty means the default group only. |
+| [`shellActivation`](#opt-shellActivation) | boolean | `true` | `true`, `false` | Put the project toolchain on PATH in new interactive shells, for projects under consentPaths only. |
 
 <!-- generated:options:end -->
 
