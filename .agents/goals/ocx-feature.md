@@ -94,8 +94,12 @@ Each item is met only with evidence: the commit, command output, run URL or PR U
 
 ### Documentation and announcement
 
-- [ ] "Conventions adopted" — `ocx-sh/conventions` template applied and the
-  `fleet.toml` entry PR open.
+- [x] "Conventions adopted" — `ocx-sh/conventions` template applied and the
+  `fleet.toml` entry PR open. Evidence 2026-11-17: template v0.3.5 landed in
+  [#1](https://github.com/ocx-sh/devcontainer-features/pull/1) (merged, all
+  checks green at 245b2ec; `task verify` and `task baseline:check` exit 0
+  locally); fleet entry
+  [ocx-sh/conventions#35](https://github.com/ocx-sh/conventions/pull/35) open.
 - [ ] "Docs site" — `@ocx-sh/theme` site in this repo, deployed to
   `https://ocx.sh/integrations/devcontainer/`; `ocx-site check`, Lighthouse
   and link checks pass.
@@ -143,6 +147,62 @@ Each item is met only with evidence: the commit, command output, run URL or PR U
 - Dispatch token: reuse the org-level `OCX_ANNOUNCE_TOKEN` in `www-setup`. If
   its scope excludes this repo, the hourly poll carries releases and the gap
   is reported in the final summary.
+- Own download logic, not a wrapper around the official installer: its
+  `assert_https_url` refuses any non-HTTPS `OCX_INSTALL_DIST_URL`, so it
+  cannot read the vendored `dist.json`. The feature ports the installer's
+  functions (libc and target detection, downloader probe, checksum, safe
+  extraction, manifest row lookup) and keeps its exit codes.
+- `main` ruleset mirrors `find_ocx` exactly (deletion and non-fast-forward
+  blocked, bypass for organisation admins and repository role 2): ruleset id
+  27418948, created 2026-11-17. It requires no pull request, so the release
+  workflow can commit with `GITHUB_TOKEN`.
+- Tool groups: node and pnpm sit in the default `ocx.toml` group because the
+  template's test job pulls `default,test` and a tool cannot be in two groups.
+- Website claim: [ocx-sh/website#53](https://github.com/ocx-sh/website/pull/53)
+  opened 2026-11-17 (claim `/integrations/devcontainer/`, hub category
+  `build`). Until it is merged and a theme release is tagged, the docs site
+  builds against a pinned commit of that branch.
+- Conventions pins the deploy action at v0.3.0 (template-owned
+  `deploy-site.yml`); the action aborts on a Pagefind mismatch with theme
+  0.6.0. Resolved at docs deploy time, not by hand-editing the template file
+  unless the deploy proves the mismatch.
+
+- `libc` defaults to `musl` (enum `auto`, `gnu`, `musl`). The spike
+  (`research/runtime-contract.md` § 1) shows the platform is detected from
+  the host at run time, so the static musl build resolves glibc packages on
+  glibc hosts and runs on every tested image; `auto` follows the official
+  installer (gnu when glibc >= 2.28, else musl).
+- The tool-groups option is `pullGroups`, not `groups`: where `/bin/sh` is
+  bash the variable `GROUPS` is special and the option value is lost
+  (fedora shows `GROUPS=0`, `research/runtime-contract.md` § 6).
+- Shell activation composes the project environment once at shell start with
+  the documented `ocx --offline env` recipe, from `/etc/profile.d/ocx.sh` and
+  one line in the system bashrc and zshrc files. The per-prompt hook is not
+  shipped: `ocx self activate` only works from a per-user `ocx self setup`
+  layout, and faking that layout relies on an undocumented path. Upgrade when
+  ocx offers a system-binary activation mode. Option `shellActivation` turns
+  it off.
+- Lifecycle: managed configuration is applied in `onCreateCommand`, the
+  toolchain restore runs in `updateContentCommand`, so Codespaces prebuilds
+  include the tools. Both run as the remote user. A missing `ocx.toml` is a
+  silent no-op; any other failure warns and exits 0, so a stale lock or no
+  network never blocks opening the container.
+- Option-dependent settings go to `/etc/ocx/config.toml` (update check,
+  consent paths, managed source); only `OCX_HOME` needs an environment
+  variable. An existing system config is never overwritten.
+- `caBundle` is used for the build-time download and is also exported as
+  `OCX_EXTRA_CA_CERTS` for run time, so one option covers a TLS-intercepting
+  proxy end to end.
+- `busybox` has no package manager and no CA bundle. The matrix tests a
+  busybox image with a CA bundle added; bare busybox is documented as
+  needing `caBundle`, and the build fails there with a clear message.
+- First published feature version is `1.0.0`, so documentation can use `:1`.
+- CI mapping (template-owned workflows): `verify-basic` runs `ci:lint`,
+  `ci:test` and `ci:docs` on amd64 for every pull request; `verify-deep`
+  runs `ci:deep` on amd64 and arm64 and carries the full image matrix.
+- Dispatch contract from `www-setup`
+  ([ocx-sh/www-setup#43](https://github.com/ocx-sh/www-setup/pull/43)):
+  `repository_dispatch` type `dist-updated`, payload `{version, sha256, url}`.
 
 ## Stop conditions
 
