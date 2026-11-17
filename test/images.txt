@@ -1,0 +1,22 @@
+# The base-image matrix: one image per line as `<alias> <image reference> [platform]`.
+# alias: [a-z0-9-]+, the value of `task test:image IMAGE=<alias>` and part of the report file names.
+# platform (optional): the only CPU architecture the image is published for (amd64 or arm64);
+#   other hosts skip the image with a visible line.
+# A reference starting with `ocx-test/` is built locally from test/images/<name>/Dockerfile first.
+# Tags are explicit where the registry has a stable major tag; Renovate may bump them.
+# The IMAGE enum in taskfiles/images.taskfile.yml must list exactly these aliases (a unit test checks).
+debian debian:stable-slim
+ubuntu ubuntu:24.04
+alpine alpine:3
+fedora fedora:45
+rocky rockylinux:9-minimal
+alma almalinux:9
+ubi-minimal registry.access.redhat.com/ubi9/ubi-minimal
+amazonlinux amazonlinux:2023
+opensuse opensuse/leap:15
+arch archlinux:latest amd64
+wolfi cgr.dev/chainguard/wolfi-base
+busybox ocx-test/busybox-ca:local
+devcontainers-ubuntu mcr.microsoft.com/devcontainers/base:ubuntu
+devcontainers-debian mcr.microsoft.com/devcontainers/base:debian
+devcontainers-alpine mcr.microsoft.com/devcontainers/base:alpine
