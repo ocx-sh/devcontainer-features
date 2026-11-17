@@ -62,7 +62,7 @@ A build that needs a mirror or a private manifest uses the [`mirrorUrl`](options
 | [`installDir`](options.md#opt-installDir) | The installer uses the per-user store, while the feature places the binary in one directory that is on PATH. |
 | [`noUpdateCheck`](options.md#opt-noUpdateCheck) | The installer has no counterpart, while the feature turns off the ocx update check by default so the container makes no needless network call. |
 | [`consentPaths`](options.md#opt-consentPaths) | The installer has no counterpart, while the feature lets projects under the listed paths activate without a prompt. |
-| [`pull`](options.md#opt-pull) | The installer only installs ocx, while the feature can also restore the project toolchain at build time. |
+| [`pull`](options.md#opt-pull) | The installer only installs ocx, while the feature can also restore the project toolchain when the container is created. |
 | [`pullGroups`](options.md#opt-pullGroups) | The installer has no toolchain step, while the feature restores the listed tool groups when pull is on. |
 | [`shellActivation`](options.md#opt-shellActivation) | The installer edits shell profiles itself, while the feature puts the project toolchain on PATH in new shells on request. |
 
