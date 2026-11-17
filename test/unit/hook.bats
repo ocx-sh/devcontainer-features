@@ -137,11 +137,20 @@ warnings() { printf '%s\n' "$output" | grep -c 'warning:' || true; }
     done
 }
 
-@test "exit 64 without any ocx.toml is silent" {
-    stub ocx 'exit 64'
+@test "no ocx.toml anywhere: ocx is not even run, nothing is printed" {
+    stub ocx 'echo "error: no ocx.toml found" >&2; exit 64'
     hook update-content "$SANDBOX/none"
     assert_success
     assert_output ""
+    refute_stub_called "ocx pull"
+}
+
+@test "exit 64 with OCX_PROJECT set but no ocx.toml above is silent" {
+    stub ocx 'exit 64'
+    OCX_PROJECT=/elsewhere hook update-content "$SANDBOX/none"
+    assert_success
+    assert_output ""
+    assert_stub_called "ocx pull"
 }
 
 @test "exit 64 with ocx.toml in a parent directory warns" {
@@ -169,11 +178,11 @@ warnings() { printf '%s\n' "$output" | grep -c 'warning:' || true; }
     refute_stub_called "ocx pull"
 }
 
-@test "root without any project is not blocked by the guard" {
+@test "root without any project does nothing" {
     as_uid 0
     hook update-content "$SANDBOX/none"
     assert_success
-    assert_stub_called "ocx pull"
+    assert_output ""
 }
 
 @test "non-root pulls even when the workspace is owned by another uid" {

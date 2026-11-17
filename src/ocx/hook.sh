@@ -69,6 +69,8 @@ do_update_content() {
     [ "${OCXF_PULL:-0}" = 1 ] || return 0
     __proj=$(nearest_toml)
     __uid=${__OCXF_TESTING_UID:-$(id -u)}
+    # No project anywhere above: ocx would only print its own "no ocx.toml" error, so stay silent.
+    if [ -z "$__proj" ] && [ -z "${OCX_PROJECT:-}" ]; then return 0; fi
     __owner=
     [ -z "$__proj" ] || __owner=$(owner_uid "$__proj")
     if [ -n "$__proj" ] && [ "$__uid" = 0 ] && [ "$__owner" != 0 ]; then
