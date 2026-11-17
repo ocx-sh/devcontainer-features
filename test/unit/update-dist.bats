@@ -37,7 +37,8 @@ MUSL_URL="$BASE_URL/v9.9.8/ocx-x86_64-unknown-linux-musl.tar.gz"
 
 # jq filter adding stable version $1 with every target the vendored newest version has.
 newver() {
-    printf '. as $o | .latest.version="%s" | .releases = ([.releases[] | select(.version==$o.latest.version) | .version="%s" | .tag="v%s" | .url=("%s/v%s/" + .filename) | .sha256=("a"+("0"*63))] + .releases)' "$1" "$1" "$1" "$BASE_URL" "$1"
+    # shellcheck disable=SC2016 # $o is a jq variable, not a shell one
+    printf '. as $o |.latest.version="%s" | .releases = ([.releases[] | select(.version==$o.latest.version) | .version="%s" | .tag="v%s" | .url=("%s/v%s/" + .filename) | .sha256=("a"+("0"*63))] + .releases)' "$1" "$1" "$1" "$BASE_URL" "$1"
 }
 
 sums() { (cd "$R/src/ocx" && sha256sum dist.json dist.json.sha256); }
