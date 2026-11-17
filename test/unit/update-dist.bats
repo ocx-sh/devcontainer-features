@@ -11,17 +11,29 @@ mkrepo() {
     R="$SANDBOX/repo"
     UP="$SANDBOX/up"
     mkdir -p "$R/scripts" "$R/src/ocx" "$UP"
-    cp "$REPO_ROOT/scripts/update-dist.sh" "$R/scripts/"
+    cp "$REPO_ROOT/scripts/update-dist.sh" "$REPO_ROOT/scripts/dist-canonical.jq" "$R/scripts/"
     cp "$OCXF_SRC_DIR/dist.json" "$OCXF_SRC_DIR/dist.json.sha256" "$R/src/ocx/"
     cp "$OCXF_SRC_DIR/dist.json" "$OCXF_SRC_DIR/dist.json.sha256" "$UP/"
     UPD="$R/scripts/update-dist.sh"
 }
 
-# publish <jq filter>: write the filtered vendored manifest as the upstream one, with a matching sidecar.
+# seal: write the sidecar matching $UP/dist.json.
+seal() { (cd "$UP" && sha256sum dist.json >dist.json.sha256); }
+
+# publish <jq filter>: write the filtered vendored manifest as the upstream one, in the canonical layout,
+# with a matching sidecar.
 publish() {
-    jq "$1" "$OCXF_SRC_DIR/dist.json" >"$UP/dist.json"
-    (cd "$UP" && sha256sum dist.json >dist.json.sha256)
+    jq "$1" "$OCXF_SRC_DIR/dist.json" | jq -j -f "$REPO_ROOT/scripts/dist-canonical.jq" >"$UP/dist.json"
+    seal
 }
+
+# hostile <sed expr>: upstream is the vendored manifest text edited by sed, sidecar matching.
+hostile() {
+    sed "$1" "$OCXF_SRC_DIR/dist.json" >"$UP/dist.json"
+    seal
+}
+
+MUSL_URL="$BASE_URL/v0.6.8/ocx-x86_64-unknown-linux-musl.tar.gz"
 
 # jq filter adding stable version $1 with every target the vendored newest version has.
 newver() {
@@ -241,4 +253,57 @@ case "$o" in *.sha256) cp "$UPSTREAM/dist.json.sha256" "$o";; *) cp "$UPSTREAM/d
     assert_success
     assert_output "unchanged 0.6.8"
     grep -F 'https://example.test/dist.json.sha256' "$STUB_LOG"
+}
+
+# hostile_refused <sed expr> <expected text> [update-dist options]: exit 5 and nothing written.
+hostile_refused() {
+    hostile "$1"
+    before=$(sums)
+    run_tool "$UPD" ${3:-} --from "$UP"
+    assert_failure 5
+    assert_output --partial "$2"
+    [ "$(sums)" = "$before" ]
+}
+
+@test "guard: an escaped duplicate url key is refused" {
+    hostile_refused 's|"url":"'"$MUSL_URL"'"|"url":"https://evil.example/o.tar.gz","ur\\u006c":"'"$MUSL_URL"'"|' "backslash"
+}
+
+@test "guard: an escaped duplicate sha256 key is refused" {
+    hostile_refused 's|"sha256":"96ddbd85[0-9a-f]*"|"sha256":"'"$(printf '0%.0s' $(seq 64))"'","sh\\u0061256":"96ddbd85be99542fcc3f73023103b8c0fcabe8d041a4f7e8abac697eba57d40f"|' "backslash"
+}
+
+@test "guard: a duplicate key without escapes is refused" {
+    hostile_refused 's|"url":"'"$MUSL_URL"'"|"url":"https://evil.example/o.tar.gz","url":"'"$MUSL_URL"'"|' "duplicate key"
+}
+
+@test "guard: a reordered row is refused" {
+    hostile_refused 's|\("sha256":"[0-9a-f]*"\),\("url":"[^"]*"\)}|\2,\1}|' "canonical"
+}
+
+@test "guard: rows before latest are refused" {
+    hostile_refused '3d;s|^  \]$|  ],\n  "latest": {"version":"0.6.8","channel":"stable"}|' "canonical"
+}
+
+@test "--force does not skip the format guards" {
+    hostile_refused 's|\("sha256":"[0-9a-f]*"\),\("url":"[^"]*"\)}|\2,\1}|' "canonical" --force
+}
+
+@test "guard: two parsers agree" {
+    for f in "$OCXF_SRC_DIR/dist.json" "$SANDBOX/fixture.json"; do
+        [ -f "$f" ] || jq -j -f "$REPO_ROOT/scripts/dist-canonical.jq" <(jq "$(newver 0.6.9)" "$OCXF_SRC_DIR/dist.json") >"$f"
+        # the installer's own resolver, row by row, against jq
+        jq -r '.releases[] | [.version, .target, .url, .sha256] | @tsv' "$f" >"$SANDBOX/jq.tsv"
+        run sh -c '
+            export __OCXF_TESTING_SOURCE_ONLY=1
+            OCXF_SRC_DIR=$1; . "$1/install.sh"
+            OCXF_MANIFEST=$2; OCXF_MIRROR_URL=
+            err() { echo "ERR $1"; exit 1; }
+            while IFS="	" read -r v t u s; do
+                OCXF_TARGET=$t; OCXF_VERSION_REQUEST=$v
+                ( resolve_release; printf "%s\t%s\t%s\t%s\n" "$OCXF_ROW_VERSION" "$t" "$OCXF_ROW_URL" "$OCXF_ROW_SHA" )
+            done <"$3"' sh "$OCXF_SRC_DIR" "$f" "$SANDBOX/jq.tsv"
+        assert_success
+        [ "$output" = "$(cat "$SANDBOX/jq.tsv")" ]
+    done
 }

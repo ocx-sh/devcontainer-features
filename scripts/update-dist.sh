@@ -8,7 +8,8 @@
 #
 # Usage: update-dist.sh [--check] [--force] [--from <dir>]
 #   --check       never write; exit 10 when an update is available
-#   --force       skip the guards (never the digest check)
+#   --force       skip the policy guards (additions-only, no downgrade, coverage); never the digest check
+#                 and never the format guards below
 #   --from <dir>  read dist.json and dist.json.sha256 from <dir> instead of fetching
 # env: OCXF_DIST_BASE  base URL of the two files (HTTPS only, default https://setup.ocx.sh)
 #      GITHUB_OUTPUT   when set, appends changed, old_version, new_version, pin_changed, digest
@@ -16,7 +17,14 @@
 # Exit: 0 ok (unchanged, or updated), 2 usage or missing tool, 3 network, 4 digest mismatch,
 #       5 guard violation (each printed), 10 update available (--check only).
 #
-# Guards (the first four mirror ocx-sh/find_ocx scripts/update_dist.py): additions-only with the whole
+# Format guards, always run, before any jq policy guard: no backslash byte, no duplicate key, and the file
+# must be byte-identical to dist-canonical.jq's rendering of its own content (the layout setup.ocx.sh
+# publishes). That closes every parser differential between these jq guards and the installer's
+# grep/sed: escapes, duplicate keys, reordered or extra fields, multi-line rows, rows before "latest".
+# If upstream legitimately adds a field or changes the layout, the run stops (exit 5) and the release
+# issue says so; that fail-closed stop is intended, update dist-canonical.jq in the same change.
+#
+# Policy guards (the first four mirror ocx-sh/find_ocx scripts/update_dist.py): additions-only with the whole
 # row compared, release-host url allowlist with single-segment tag and filename, no duplicate
 # (version,target), latest on the stable channel, no downgrade, new pin covers every target the old
 # pin covers. Added here: schema 1, 64 lowercase hex sha256, the four Linux targets the feature installs.
@@ -81,7 +89,24 @@ new="$tmp/dist.json"
 old="$vend/dist.json"
 old_digest=$(sha256sum "$old" | cut -d' ' -f1)
 old_version=$(jq -r '.latest.version' "$old")
-new_version=$(jq -r '.latest.version' "$new" 2>/dev/null) || die "upstream manifest is not valid JSON" 5
+
+# Format guards: never skipped, not even by --force. src/ocx/install.sh reads this file with grep and sed
+# (first textual match wins, no escape decoding) while the guards below read it with jq (escapes decoded,
+# last duplicate key wins). The file is accepted only when both read the same thing.
+# shellcheck disable=SC1003 # a literal backslash for grep
+if grep -q '\\' "$new"; then
+    die "guard violation: the manifest contains a backslash; escape sequences are refused (the installer does not decode them)" 5
+fi
+jq -e . "$new" >/dev/null 2>&1 || die "upstream manifest is not valid JSON" 5
+dup=$(jq -c --stream -n '[inputs | select(length == 2) | .[0] | map(tostring) | join("/")] | group_by(.) | map(select(length > 1) | .[0]) | join(", ")' "$new") ||
+    die "upstream manifest is not valid JSON" 5
+[ "$dup" = '""' ] || die "guard violation: duplicate key in an object: $dup" 5
+jq -j -f "$root/scripts/dist-canonical.jq" "$new" >"$tmp/canon" 2>/dev/null || die "guard violation: the manifest does not have the expected shape" 5
+if ! cmp -s "$new" "$tmp/canon"; then
+    line=$(awk 'NR == FNR { a[FNR] = $0; next } a[FNR] != $0 { print FNR ": " substr(a[FNR], 1, 200); exit }' "$new" "$tmp/canon")
+    die "guard violation: the manifest is not byte-identical to its canonical rendering; first differing line ${line:-(line count or final newline)}" 5
+fi
+new_version=$(jq -r '.latest.version' "$new")
 
 if [ "$force" -eq 0 ]; then
     # Every violation is one line; jq prints them all, then the count decides.
