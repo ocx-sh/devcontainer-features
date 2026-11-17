@@ -47,7 +47,7 @@ Serve both architectures if developers use Apple silicon machines.
 
 ## Point the build at the mirror {#mirror-url}
 
-Set `mirrorUrl` to the base URL:
+Set [`mirrorUrl`](../reference/options.md#opt-mirrorUrl) to the base URL:
 
 ```jsonc
 // doc: mirror-url
@@ -61,7 +61,7 @@ Set `mirrorUrl` to the base URL:
 }
 ```
 
-If the mirror uses a company certificate, add `caBundle` as [Trust the company CA during the build](../proxy-and-custom-ca/#ca-build) describes.
+If the mirror uses a company certificate, add `caBundle` as [Trust the company CA during the build](./proxy-and-custom-ca.md#ca-build) describes.
 The build prints the installed version when it succeeds:
 
 ```console
@@ -79,7 +79,7 @@ ocx-feature: error: checksum mismatch for ocx-x86_64-unknown-linux-musl.tar.gz
 ## Use a version outside the baked list {#dist-url}
 
 The bundled manifest lists the releases known when the feature was published.
-To install another release, host a manifest that lists it and set `distUrl`.
+To install another release, host a manifest that lists it and set [`distUrl`](../reference/options.md#opt-distUrl).
 Copy the official manifest from `https://setup.ocx.sh/dist.json` and keep its shape. The top level holds `schema`, `latest`, `latest_next` and a `releases` list. Each row looks like this:
 
 ```json
@@ -143,7 +143,7 @@ error: failed to find 2 packages:  ocx.sh/shellcheck/shellcheck:0.11.0@sha256:39
 ```
 
 A store is warm once `ocx pull` has run in it, so fill it before the network goes away.
-[Prebuild the container in Codespaces and CI](../codespaces-and-prebuilds/) shows how to do that when the container is created.
+[Prebuild the container in Codespaces and CI](./codespaces-and-prebuilds.md) shows how to do that when the container is created.
 
 ## Know what stays verified {#verified}
 
@@ -153,9 +153,10 @@ A store is warm once `ocx pull` has run in it, so fill it before the network goe
 - With `version: "latest"` or an unpinned `distUrl`, BusyBox `wget` cannot validate TLS, and the feature then refuses the manifest. Install `curl` or use a pinned name.
 
 The mirror therefore cannot swap the archive for other bytes unless it also controls the manifest.
-Tool packages come from the registries in `ocx.toml`, and this feature does not mirror them. [Apply organisation-managed configuration](../managed-config/) describes the configuration an organisation can apply to `ocx`.
+Tool packages come from the registries in `ocx.toml`, and this feature does not mirror them. [Apply organisation-managed configuration](./managed-config.md) describes the configuration an organisation can apply to `ocx`.
 
 ## Next steps {#next-steps}
 
-- [Build behind a proxy and a custom CA](../proxy-and-custom-ca/) for a network that allows GitHub only through a proxy.
-- [Fix a failed feature install](../../troubleshooting/install-errors/) when the build stops with exit code 3 or 4.
+- [How the install works](../concepts/how-the-install-works.md#verification) explains the checksum check in detail.
+- [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) for a network that allows GitHub only through a proxy.
+- [Fix a failed feature install](../troubleshooting/install-errors.md) when the build stops with exit code 3 or 4.

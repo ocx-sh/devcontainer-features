@@ -13,7 +13,7 @@ The [ocx documentation on managed configuration](https://github.com/ocx-sh/ocx/b
 
 ## Set the managed configuration {#set}
 
-Give the `managedConfig` option the OCI reference of the package:
+Give the [`managedConfig`](../reference/options.md#opt-managedConfig) option the OCI reference of the package:
 
 ```jsonc
 // doc: managed-config
@@ -50,7 +50,7 @@ $ ocx config setup --managed-config registry.example.com/acme/fleet:1
 ```
 
 The command downloads the package, stores a snapshot and then records the source as a `[managed]` seed.
-It needs a network path to the registry, and the proxy settings from [Build behind a proxy and a custom CA](../proxy-and-custom-ca/) apply to it.
+It needs a network path to the registry, and the proxy settings from [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) apply to it.
 To read the state afterwards, run `ocx config update --check`. In a container with no managed source it reports `not_configured`:
 
 ```console
@@ -103,7 +103,7 @@ Code 64 means the source was empty. The container runs without the managed setti
 
 The feature always writes `required = false`. It has no option to make the configuration mandatory.
 A container that must not start without the managed settings needs a check of its own. `ocx config update --check` reports the status but exits with 0 even when nothing is configured.
-[Fix a missing tool or failed restore](../../troubleshooting/container-errors/#config-not-synced) lists the fixes.
+[Fix a missing tool or failed restore](../troubleshooting/restore-warnings.md#config-not-synced) lists the fixes.
 
 ## Know whom you trust {#trust}
 
@@ -116,5 +116,5 @@ The feature then skips the managed source and prints a warning that names it as 
 
 ## Next steps {#next-steps}
 
-- [Build behind a proxy and a custom CA](../proxy-and-custom-ca/) when the registry sits behind a proxy.
-- [Install from a mirror or with no internet](../mirror-and-air-gapped/) for the build-time download.
+- [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) when the registry sits behind a proxy.
+- [Install from a mirror or with no internet](./mirror-and-air-gapped.md) for the build-time download.
