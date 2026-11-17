@@ -40,7 +40,7 @@ summary() {
 if [ "${DRY_RUN:-false}" = true ]; then
     pkg=$(mktemp -d)
     trap 'rm -rf "$pkg"' EXIT
-    devcontainer features package ./src -o "$pkg"
+    devcontainer features package ./src -f -o "$pkg"
     echo "dry run: packaged $ref:$v, nothing committed, pushed, tagged or published"
     summary "Dry run: feature $v with ocx $OCX_VERSION packaged; nothing committed, pushed, tagged or published."
     exit 0

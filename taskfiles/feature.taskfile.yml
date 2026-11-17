@@ -63,3 +63,12 @@ tasks:
     cmds:
       - cmd: "{{.TEST_OCX}} pnpm install --frozen-lockfile"
       - cmd: "{{.TEST_OCX}} pnpm exec sh scripts/readme.sh --check"
+
+  release:rehearse:
+    desc: Dry-run scripts/release/publish.sh with the real devcontainer CLI (packages the feature; no commit, push, tag or publish)
+    cmds:
+      - cmd: "{{.TEST_OCX}} pnpm install --frozen-lockfile"
+      - cmd: >-
+          {{.TEST_OCX}} pnpm exec env DRY_RUN=true OCX_VERSION=rehearsal DEFAULT_BRANCH=main REPO=ocx-sh/devcontainer-features
+          FEATURE_VERSION="$(sed -n 's/^  "version": "\(.*\)",$/\1/p' src/ocx/devcontainer-feature.json | head -n 1)"
+          sh scripts/release/publish.sh

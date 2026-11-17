@@ -124,3 +124,13 @@ heads() {
     assert_success
     assert_stub_called "devcontainer features publish --registry ghcr.io --namespace ocx-sh/devcontainer-features ./src"
 }
+
+@test "a dry run packages into a directory the real CLI accepts" {
+    # The real devcontainer CLI refuses an existing output directory unless -f is given (found by a real dry run).
+    # shellcheck disable=SC2016 # the stub body is expanded when the stub runs
+    stub devcontainer 'out=; force=0
+while [ $# -gt 0 ]; do case "$1" in -o) out=$2; shift ;; -f) force=1 ;; esac; shift; done
+if [ -e "$out" ] && [ "$force" -eq 0 ]; then echo "(!) ERR: Output directory $out already exists." >&2; exit 1; fi'
+    DRY_RUN=true run_tool "$PUB"
+    assert_success
+}
