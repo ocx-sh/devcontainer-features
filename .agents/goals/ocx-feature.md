@@ -160,6 +160,7 @@ Each item is met only with evidence: the commit, command output, run URL or PR U
   Partial 2026-11-17: [ocx-sh/website#53](https://github.com/ocx-sh/website/pull/53) open. Open: the `ocx-sh/ocx` pull request.
   [ocx-sh/ocx#740](https://github.com/ocx-sh/ocx/pull/740) open, 34 checks pass, 4 skipped.
   Evidence 2026-11-17: [ocx-sh/website#53](https://github.com/ocx-sh/website/pull/53) (claim `/integrations/devcontainer/`, hub category `build`) merged by the owner 2026-11-16T23:49Z; [ocx-sh/ocx#740](https://github.com/ocx-sh/ocx/pull/740) open with `roadmap.md`, `integration/devcontainers-and-editors.mdx` and `integration/index.md`, 34 checks pass and 4 skipped, to be merged by the owner after the first publish.
+  Reworked 2026-11-17 on the owner's request: [ocx-sh/ocx#740](https://github.com/ocx-sh/ocx/pull/740) no longer repeats the feature documentation. `integration/devcontainers-and-editors` became `integration/editors` with a short pointer to `/integrations/devcontainer/`, the old URL redirects, and the start page and the first-project page link to the feature docs. 33 checks pass, 4 skipped, at c581a31.
 
 ## Autonomy
 
@@ -329,6 +330,11 @@ Each item is met only with evidence: the commit, command output, run URL or PR U
   v0.7.0 tag. Two unrelated flaky tests showed up on the way
   (`deploy.test.ts` "keeps the phase order when some files are skipped",
   e2e `motion-controls.spec.ts:56` and `sidebar-deferred.spec.ts:96`).
+- Owner message of 2026-11-17: the feature documentation at
+  `/integrations/devcontainer/` is the only dev container documentation; the
+  ocx docs point to it. The manual recipe without the feature (copy the binary
+  in a `Dockerfile`, pull in `postCreateCommand`) was removed from the ocx docs
+  and not moved here; the ocx Docker page still covers copying the binary.
 
 ## Stop conditions
 
