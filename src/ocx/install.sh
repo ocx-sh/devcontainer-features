@@ -38,6 +38,13 @@ OCXF_HASH_TOOL=
 
 # --- options ----------------------------------------------------------------
 
+# assert_no_cntrl <option name> <value>: a control byte (tab, CR, ESC, DEL, newline) would reach a TOML file
+# or a generated script. tr, not a case bracket: literal control bytes in a pattern are fragile on dash and busybox.
+assert_no_cntrl() {
+    ocxf_plain=$(printf '%sx' "$2" | LC_ALL=C tr -d '[:cntrl:]')
+    [ "$ocxf_plain" = "$(printf '%sx' "$2")" ] || err "option $1 must not contain control characters" 2
+}
+
 # Characters that must never reach a generated shell file or a config line.
 assert_safe_path() {
     case "$2" in
@@ -53,6 +60,7 @@ assert_safe_path() {
             err "option $1 contains characters unsafe for shell embedding (got: $2)" 2
             ;;
     esac
+    assert_no_cntrl "$1" "$2"
 }
 
 # parse_bool <option name> <value>: print 1 or 0, or exit 2 on a spelling that is neither.
