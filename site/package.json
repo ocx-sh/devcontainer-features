@@ -19,6 +19,7 @@
     "@lhci/cli": "0.15.1",
     "chrome-launcher": "1.2.1",
     "lighthouse": "12.6.1",
+    "markdownlint-cli": "0.45.0",
     "playwright-core": "^1.63.0"
   }
 }

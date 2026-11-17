@@ -45,6 +45,8 @@ tasks:
       - "{{.OCX}} node scripts/generate-docs.mjs --check"
       # test/docs/bindings.json: one binding per `<!-- doc: key -->`; the fence and the bound test must not drift (DOC-EX-01, DOC-EX-02).
       - "{{.OCX}} node scripts/check-doc-bindings.mjs"
+      # Tier 0 markdown lint with the docs-quality config plus the adopter overrides of ../.markdownlint.jsonc.
+      - "{{.OCX}} pnpm exec markdownlint --config ../.markdownlint.jsonc 'src/content/docs/**/*.md'"
       - for: [doc_declaration, prose, page_type, landing_check, doc_examples, links_raw]
         # uv finds or fetches the Python 3.11 the checks need; each check exits 1 on a finding.
         cmd: "{{.OCX}} uv run --no-project --quiet --python '>=3.11' python {{.CHECKS}}/{{.ITEM}}.py --root src/content/docs"

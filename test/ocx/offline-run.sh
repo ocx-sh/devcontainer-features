@@ -8,6 +8,9 @@
 # shellcheck disable=SC2329 # check calls the functions by name
 . "$(dirname "$0")/scenario.sh"
 
+check "containerEnv sets OCX_OFFLINE=1 in the container" test "${OCX_OFFLINE:-}" = 1
+# locking needs the network, so this script leaves the offline mode and sets it per command
+unset OCX_OFFLINE
 new_project offline || true
 rm -rf "$proj/.ocx" "$HOME/.ocx"
 cold_exits_79() {
