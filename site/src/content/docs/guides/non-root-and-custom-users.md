@@ -101,7 +101,7 @@ To change that, set `remoteUser` to a user that the image has, or create a user 
 ## Keep one store per user {#private-store}
 
 By default each user keeps a separate store, so two users download the same package twice.
-The `ocxHome` option sets one `OCX_HOME` for all users instead.
+The [`ocxHome` option](../reference/options.md#opt-ocxHome) sets one `OCX_HOME` for all users instead.
 
 The feature does not create that directory or change its owner.
 The directory must exist and be writable by every user who runs ocx.

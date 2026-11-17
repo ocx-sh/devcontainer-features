@@ -6,12 +6,12 @@ description: Choose which ocx version the feature installs, with the default pin
 <!-- doc_tier: everyday -->
 
 This page shows how to set the ocx version a dev container installs and how to read the installed version back.
-The `version` option takes `pinned`, an exact `X.Y.Z` or `latest`.
+The [`version` option](../reference/options.md#opt-version) takes `pinned`, an exact `X.Y.Z` or `latest`.
 
 ## Know what the default installs {#default-pin}
 
 The default is `"version": "pinned"`.
-It installs the ocx version that the feature release was tested with, so each feature version maps to one ocx version.
+It installs the ocx version that the feature release was tested with, so each feature version maps to one ocx version ([why](../concepts/how-the-install-works.md#one-version)).
 Feature 1.0.0 installs ocx 0.6.8.
 
 <!-- doc: version-default -->
@@ -121,3 +121,4 @@ Both commands print the same version, for example `0.6.7` after the exact pin ab
 
 - [Add ocx to a dev container](../quickstart.md) is the first-run walk-through.
 - [Use ocx on a minimal base image](minimal-images.md) covers images without the usual tools.
+- [Changelog](../changelog.md) lists the ocx version each feature release pins.

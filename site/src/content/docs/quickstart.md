@@ -82,3 +82,4 @@ The `.ocx/toolchain` folder holds its own `.gitignore`, so it stays out of your 
 - [Pin or upgrade the ocx version](guides/pin-or-upgrade-version.md) shows how to freeze or follow the ocx release.
 - [Run ocx as root, a named user or a split user](guides/non-root-and-custom-users.md) explains the user setups.
 - [Use ocx on a minimal base image](guides/minimal-images.md) covers Alpine and other small images.
+- [Options](reference/options.md) describes every feature option.
