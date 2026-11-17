@@ -10,9 +10,9 @@ setup() {
     : >"$CALLS"
     mkdir -p "$R/scripts/release" "$R/src/ocx"
     cp "$REPO_ROOT/scripts/release/prepare.sh" "$R/scripts/release/"
-    printf '{"latest":{"version":"0.6.8"}}\n' >"$R/src/ocx/dist.json"
+    printf '{"latest":{"version":"9.9.8"}}\n' >"$R/src/ocx/dist.json"
     printf '{\n  "id": "ocx",\n  "version": "1.0.0",\n  "options": {}\n}\n' >"$R/src/ocx/devcontainer-feature.json"
-    printf '# Changelog\n\nIntro.\n\n## 1.0.0 - 2026-11-17\n\n- ocx 0.6.8\n' >"$R/CHANGELOG.md"
+    printf '# Changelog\n\nIntro.\n\n## 1.0.0 - 2026-11-17\n\n- ocx 9.9.8\n' >"$R/CHANGELOG.md"
     # Fakes for the scripts prepare.sh orchestrates: log the call, honour an exit code from the env.
     fake update-dist.sh FAKE_UPDATE_RC <<'EOT'
 printf '{"latest":{"version":"0.7.0"}}\n' >"$(dirname "$0")/../src/ocx/dist.json"
@@ -51,17 +51,17 @@ fake() {
     assert_success
     run cat "$CALLS"
     assert_output "update-dist.sh
-verify-assets 0.6.8 0.7.0
+verify-assets 9.9.8 0.7.0
 bump-feature-version.sh
 readme.sh
 check-installer-parity.sh"
     run cat "$GITHUB_OUTPUT"
     assert_line "feature_version=1.0.1"
     assert_line "ocx_version=0.7.0"
-    assert_line "old_ocx_version=0.6.8"
+    assert_line "old_ocx_version=9.9.8"
     run cat "$R/CHANGELOG.md"
     assert_output --partial "## 1.0.1 - "
-    assert_output --partial "- ocx 0.7.0 (was 0.6.8)"
+    assert_output --partial "- ocx 0.7.0 (was 9.9.8)"
     # newest first, above the seeded entry
     run grep -n '^## ' "$R/CHANGELOG.md"
     assert_line --index 0 --partial "1.0.1"
@@ -79,7 +79,7 @@ check-installer-parity.sh"
     assert_output ""
     run cat "$GITHUB_OUTPUT"
     assert_line "feature_version=1.0.0"
-    assert_line "ocx_version=0.6.8"
+    assert_line "ocx_version=9.9.8"
     [ "$(grep -c '^## ' "$R/CHANGELOG.md")" -eq 1 ]
 }
 
@@ -131,6 +131,6 @@ check-installer-parity.sh"
     assert_failure 5
     run cat "$CALLS"
     assert_output "update-dist.sh
-verify-assets 0.6.8 0.7.0"
+verify-assets 9.9.8 0.7.0"
     [ ! -f "$OUT_DIR/tree.patch" ]
 }

@@ -7,7 +7,7 @@ MARK='# Written by the ocx Dev Container Feature (id: ocx). Edits are overwritte
 
 setup() {
     ocxf_setup
-    export OCXF_VERSION=0.6.8 OCXF_BIN=/usr/local/bin/ocx OCXF_INSTALL_DIR=/usr/local/bin
+    export OCXF_VERSION=9.9.8 OCXF_BIN=/usr/local/bin/ocx OCXF_INSTALL_DIR=/usr/local/bin
     export OCXF_CA_BUNDLE='' OCXF_MANAGED_CONFIG='' OCXF_OCX_HOME='' OCXF_NO_UPDATE_CHECK=0
     export OCXF_CONSENT_PATHS='' OCXF_PULL=1 OCXF_PULL_GROUPS='' OCXF_SHELL_ACTIVATION=1
     mkroot /etc
@@ -284,7 +284,7 @@ line2"
     run_snippet '. "$__OCXF_TESTING_ROOT/usr/local/share/ocx-feature/feature.env"
 printf "%s" "$OCXF_BIN|$OCXF_OCX_HOME|$OCXF_MANAGED_CONFIG|$OCXF_PULL_GROUPS|$OCXF_VERSION|$OCXF_PULL"'
     assert_success
-    assert_output "/b/$hostile|/h/$hostile|m$hostile|g$hostile|0.6.8|1"
+    assert_output "/b/$hostile|/h/$hostile|m$hostile|g$hostile|9.9.8|1"
 }
 
 @test "feature.env holds only KEY='value' lines for the listed keys" {

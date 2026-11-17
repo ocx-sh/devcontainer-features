@@ -5,7 +5,7 @@ load helpers
 
 setup() {
     ocxf_setup
-    export OCXF_VERSION=0.6.8 OCXF_BIN="$STUB_DIR/ocx" OCXF_INSTALL_DIR=/usr/local/bin
+    export OCXF_VERSION=9.9.8 OCXF_BIN="$STUB_DIR/ocx" OCXF_INSTALL_DIR=/usr/local/bin
     export OCXF_CA_BUNDLE='' OCXF_MANAGED_CONFIG='' OCXF_OCX_HOME='' OCXF_NO_UPDATE_CHECK=0
     WS="$SANDBOX/ws"
     mkdir -p "$WS/sub"
