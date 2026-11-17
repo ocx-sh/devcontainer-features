@@ -7,7 +7,7 @@
 load helpers
 
 INSTALL="$REPO_ROOT/src/ocx/install.sh"
-V=0.6.8
+V=9.9.8
 # The suite must pass on any host: unpinned tests see the real machine (busybox sh runs its own uname
 # applet, so the uname stub cannot override it there), hence MUSL and GNU follow the host and the
 # manifest carries both architectures.
@@ -41,7 +41,7 @@ serve() {
 # mkdist: (re)build the vendored manifest and its digest in the sandbox source dir from fx/arc.
 mkdist() {
     _rows=
-    for _spec in $V:$MUSL $V:$GNU $V:$OTHER 0.6.7:$MUSL; do
+    for _spec in $V:$MUSL $V:$GNU $V:$OTHER 9.9.7:$MUSL; do
         _v=${_spec%%:*}
         _t=${_spec#*:}
         _a="$SANDBOX/fx/arc/$_v-$_t.tgz"
@@ -117,7 +117,7 @@ setup() {
     OCXF_SRC_DIR="$SANDBOX/src"
     export HOME TMPDIR OCXF_RETRY_DELAY OCXF_SRC_DIR
     cp "$REPO_ROOT/src/ocx/lib.sh" "$REPO_ROOT/src/ocx/devcontainer-feature.json" "$SANDBOX/src/"
-    for _spec in $V:$MUSL $V:$GNU $V:$OTHER 0.6.7:$MUSL; do
+    for _spec in $V:$MUSL $V:$GNU $V:$OTHER 9.9.7:$MUSL; do
         fake_archive "${_spec%%:*}" "${_spec#*:}" "${_spec%%:*}" "$SANDBOX/fx/arc/${_spec%%:*}-${_spec#*:}.tgz"
     done
     mkdist
@@ -201,16 +201,16 @@ pm_stubs() {
 }
 
 @test "exact version present installs that version" {
-    VERSION=0.6.7 inst
+    VERSION=9.9.7 inst
     assert_success
-    [ "$(installed_version)" = 0.6.7 ]
-    [ "$(cat "$__OCXF_TESTING_ROOT/usr/local/share/ocx-feature/ocx-version")" = 0.6.7 ]
+    [ "$(installed_version)" = 9.9.7 ]
+    [ "$(cat "$__OCXF_TESTING_ROOT/usr/local/share/ocx-feature/ocx-version")" = 9.9.7 ]
 }
 
 @test "a leading v on the version is accepted" {
-    VERSION=v0.6.7 inst
+    VERSION=v9.9.7 inst
     assert_success
-    [ "$(installed_version)" = 0.6.7 ]
+    [ "$(installed_version)" = 9.9.7 ]
 }
 
 @test "exact version absent exits 2 naming the version, the newest and the helping options" {

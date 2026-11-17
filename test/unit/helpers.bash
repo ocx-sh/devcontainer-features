@@ -8,6 +8,9 @@ REPO_ROOT=$(cd "$BATS_TEST_DIRNAME/../.." && pwd)
 OCXF_SRC_DIR="$REPO_ROOT/src/ocx"
 export OCXF_SRC_DIR
 
+# Frozen stand-in for the vendored manifest: pins 9.9.8 so no test depends on the real pinned ocx version.
+OCXF_DIST_FIXTURE="$BATS_TEST_DIRNAME/fixtures/dist"
+
 bats_load_library "$REPO_ROOT/node_modules/bats-support/load.bash"
 bats_load_library "$REPO_ROOT/node_modules/bats-assert/load.bash"
 

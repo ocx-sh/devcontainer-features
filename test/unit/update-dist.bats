@@ -12,8 +12,8 @@ mkrepo() {
     UP="$SANDBOX/up"
     mkdir -p "$R/scripts" "$R/src/ocx" "$UP"
     cp "$REPO_ROOT/scripts/update-dist.sh" "$REPO_ROOT/scripts/dist-canonical.jq" "$R/scripts/"
-    cp "$OCXF_SRC_DIR/dist.json" "$OCXF_SRC_DIR/dist.json.sha256" "$R/src/ocx/"
-    cp "$OCXF_SRC_DIR/dist.json" "$OCXF_SRC_DIR/dist.json.sha256" "$UP/"
+    cp "$OCXF_DIST_FIXTURE/dist.json" "$OCXF_DIST_FIXTURE/dist.json.sha256" "$R/src/ocx/"
+    cp "$OCXF_DIST_FIXTURE/dist.json" "$OCXF_DIST_FIXTURE/dist.json.sha256" "$UP/"
     UPD="$R/scripts/update-dist.sh"
 }
 
@@ -23,21 +23,21 @@ seal() { (cd "$UP" && sha256sum dist.json >dist.json.sha256); }
 # publish <jq filter>: write the filtered vendored manifest as the upstream one, in the canonical layout,
 # with a matching sidecar.
 publish() {
-    jq "$1" "$OCXF_SRC_DIR/dist.json" | jq -j -f "$REPO_ROOT/scripts/dist-canonical.jq" >"$UP/dist.json"
+    jq "$1" "$OCXF_DIST_FIXTURE/dist.json" | jq -j -f "$REPO_ROOT/scripts/dist-canonical.jq" >"$UP/dist.json"
     seal
 }
 
 # hostile <sed expr>: upstream is the vendored manifest text edited by sed, sidecar matching.
 hostile() {
-    sed "$1" "$OCXF_SRC_DIR/dist.json" >"$UP/dist.json"
+    sed "$1" "$OCXF_DIST_FIXTURE/dist.json" >"$UP/dist.json"
     seal
 }
 
-MUSL_URL="$BASE_URL/v0.6.8/ocx-x86_64-unknown-linux-musl.tar.gz"
+MUSL_URL="$BASE_URL/v9.9.8/ocx-x86_64-unknown-linux-musl.tar.gz"
 
 # jq filter adding stable version $1 with every target the vendored newest version has.
 newver() {
-    printf '.latest.version="%s" | .releases = ([.releases[] | select(.version=="0.6.8") | .version="%s" | .tag="v%s" | .url=("%s/v%s/" + .filename) | .sha256=("a"+("0"*63))] + .releases)' "$1" "$1" "$1" "$BASE_URL" "$1"
+    printf '. as $o | .latest.version="%s" | .releases = ([.releases[] | select(.version==$o.latest.version) | .version="%s" | .tag="v%s" | .url=("%s/v%s/" + .filename) | .sha256=("a"+("0"*63))] + .releases)' "$1" "$1" "$1" "$BASE_URL" "$1"
 }
 
 sums() { (cd "$R/src/ocx" && sha256sum dist.json dist.json.sha256); }
@@ -51,15 +51,15 @@ setup() {
     before=$(sums)
     run_tool "$UPD" --from "$UP"
     assert_success
-    assert_output "unchanged 0.6.8"
+    assert_output "unchanged 9.9.8"
     [ "$(sums)" = "$before" ]
 }
 
 @test "new newest version is written byte-identically" {
-    publish "$(newver 0.6.9)"
+    publish "$(newver 9.9.9)"
     run_tool "$UPD" --from "$UP"
     assert_success
-    assert_output "updated 0.6.8 -> 0.6.9"
+    assert_output "updated 9.9.8 -> 9.9.9"
     cmp "$UP/dist.json" "$R/src/ocx/dist.json"
     cmp "$UP/dist.json.sha256" "$R/src/ocx/dist.json.sha256"
 }
@@ -69,19 +69,19 @@ setup() {
     : >"$SANDBOX/out"
     GITHUB_OUTPUT="$SANDBOX/out" run_tool "$UPD" --from "$UP"
     assert_success
-    assert_output "updated 0.6.8 -> 0.6.8"
+    assert_output "updated 9.9.8 -> 9.9.8"
     grep -Fx 'pin_changed=false' "$SANDBOX/out"
     grep -Fx 'changed=true' "$SANDBOX/out"
 }
 
 @test "GITHUB_OUTPUT carries changed, versions, pin_changed and digest" {
-    publish "$(newver 0.6.9)"
+    publish "$(newver 9.9.9)"
     : >"$SANDBOX/out"
     GITHUB_OUTPUT="$SANDBOX/out" run_tool "$UPD" --from "$UP"
     assert_success
     grep -Fx 'changed=true' "$SANDBOX/out"
-    grep -Fx 'old_version=0.6.8' "$SANDBOX/out"
-    grep -Fx 'new_version=0.6.9' "$SANDBOX/out"
+    grep -Fx 'old_version=9.9.8' "$SANDBOX/out"
+    grep -Fx 'new_version=9.9.9' "$SANDBOX/out"
     grep -Fx 'pin_changed=true' "$SANDBOX/out"
     grep -Fx "digest=$(cut -d' ' -f1 "$UP/dist.json.sha256")" "$SANDBOX/out"
 }
@@ -91,27 +91,27 @@ setup() {
     GITHUB_OUTPUT="$SANDBOX/out" run_tool "$UPD" --from "$UP"
     assert_success
     grep -Fx 'changed=false' "$SANDBOX/out"
-    grep -Fx 'new_version=0.6.8' "$SANDBOX/out"
+    grep -Fx 'new_version=9.9.8' "$SANDBOX/out"
     grep -Fx 'pin_changed=false' "$SANDBOX/out"
 }
 
 @test "--check exits 10 on an update and writes nothing" {
-    publish "$(newver 0.6.9)"
+    publish "$(newver 9.9.9)"
     before=$(sums)
     run_tool "$UPD" --check --from "$UP"
     assert_failure 10
-    assert_output --partial "0.6.8 -> 0.6.9"
+    assert_output --partial "9.9.8 -> 9.9.9"
     [ "$(sums)" = "$before" ]
 }
 
 @test "--check exits 0 when unchanged" {
     run_tool "$UPD" --check --from "$UP"
     assert_success
-    assert_output "unchanged 0.6.8"
+    assert_output "unchanged 9.9.8"
 }
 
 @test "digest mismatch exits 4 and writes nothing" {
-    publish "$(newver 0.6.9)"
+    publish "$(newver 9.9.9)"
     printf '%064d  dist.json\n' 1 >"$UP/dist.json.sha256"
     before=$(sums)
     run_tool "$UPD" --from "$UP"
@@ -130,35 +130,35 @@ guard() {
 }
 
 @test "guard: a vendored row with a changed sha256" {
-    guard sha '(.releases[] | select(.target=="x86_64-unknown-linux-musl" and .version=="0.6.8") | .sha256) = ("b" * 64)' "0.6.8 x86_64-unknown-linux-musl"
+    guard sha '(.releases[] | select(.target=="x86_64-unknown-linux-musl" and .version=="9.9.8") | .sha256) = ("b" * 64)' "9.9.8 x86_64-unknown-linux-musl"
 }
 
 @test "guard: a vendored row with a changed url" {
-    guard url '(.releases[] | select(.target=="x86_64-unknown-linux-musl") | .url) += "x"' "0.6.8 x86_64-unknown-linux-musl"
+    guard url '(.releases[] | select(.target=="x86_64-unknown-linux-musl") | .url) += "x"' "9.9.8 x86_64-unknown-linux-musl"
 }
 
 @test "guard: a vendored row removed" {
-    guard drop 'del(.releases[] | select(.target=="aarch64-apple-darwin"))' "0.6.8 aarch64-apple-darwin"
+    guard drop 'del(.releases[] | select(.target=="aarch64-apple-darwin"))' "9.9.8 aarch64-apple-darwin"
 }
 
 @test "guard: a url off the release host" {
-    guard host "$(newver 0.6.9) | (.releases[0].url) = \"https://evil.example/ocx-sh/ocx/releases/download/v0.6.9/x.tar.gz\"" "0.6.9"
+    guard host "$(newver 9.9.9) | (.releases[0].url) = \"https://evil.example/ocx-sh/ocx/releases/download/v9.9.9/x.tar.gz\"" "9.9.9"
 }
 
 @test "guard: a url that is not https" {
-    guard http "$(newver 0.6.9) | (.releases[0].url) |= sub(\"^https\"; \"http\")" "0.6.9"
+    guard http "$(newver 9.9.9) | (.releases[0].url) |= sub(\"^https\"; \"http\")" "9.9.9"
 }
 
 @test "guard: a url with a dot segment" {
-    guard dots "$(newver 0.6.9) | (.releases[0].url) = \"$BASE_URL/v0.6.9/../../x.tar.gz\"" "0.6.9"
+    guard dots "$(newver 9.9.9) | (.releases[0].url) = \"$BASE_URL/v9.9.9/../../x.tar.gz\"" "9.9.9"
 }
 
 @test "guard: a malformed sha256" {
-    guard hex "$(newver 0.6.9) | (.releases[0].sha256) = \"ABC\"" "0.6.9"
+    guard hex "$(newver 9.9.9) | (.releases[0].sha256) = \"ABC\"" "9.9.9"
 }
 
 @test "guard: an upper-case sha256" {
-    guard upper "$(newver 0.6.9) | (.releases[0].sha256) |= ascii_upcase | (.releases[0].sha256) |= sub(\"^A\"; \"A\")" "0.6.9"
+    guard upper "$(newver 9.9.9) | (.releases[0].sha256) |= ascii_upcase | (.releases[0].sha256) |= sub(\"^A\"; \"A\")" "9.9.9"
 }
 
 @test "guard: schema other than 1" {
@@ -174,7 +174,7 @@ guard() {
 }
 
 @test "guard: a required Linux target missing for the newest version" {
-    guard tgt "$(newver 0.6.9) | del(.releases[] | select(.version==\"0.6.9\" and .target==\"aarch64-unknown-linux-gnu\"))" "aarch64-unknown-linux-gnu"
+    guard tgt "$(newver 9.9.9) | del(.releases[] | select(.version==\"9.9.9\" and .target==\"aarch64-unknown-linux-gnu\"))" "aarch64-unknown-linux-gnu"
 }
 
 @test "guard: a duplicate (version,target) row" {
@@ -182,23 +182,23 @@ guard() {
 }
 
 @test "guard: new version drops a target the old pin covers" {
-    guard cover "$(newver 0.6.9) | del(.releases[] | select(.version==\"0.6.9\" and .target==\"aarch64-apple-darwin\"))" "aarch64-apple-darwin"
+    guard cover "$(newver 9.9.9) | del(.releases[] | select(.version==\"9.9.9\" and .target==\"aarch64-apple-darwin\"))" "aarch64-apple-darwin"
 }
 
 @test "guard: a filename that is not a single path segment" {
-    guard seg "$(newver 0.6.9) | (.releases[0].filename) = \"../x.tar.gz\"" "0.6.9"
+    guard seg "$(newver 9.9.9) | (.releases[0].filename) = \"../x.tar.gz\"" "9.9.9"
 }
 
 @test "--force bypasses the policy guards and writes" {
     publish '.releases |= map(select(.target != "aarch64-apple-darwin"))'
     run_tool "$UPD" --force --from "$UP"
     assert_success
-    assert_output "updated 0.6.8 -> 0.6.8"
+    assert_output "updated 9.9.8 -> 9.9.8"
     cmp "$UP/dist.json" "$R/src/ocx/dist.json"
 }
 
 @test "--force still refuses a digest mismatch" {
-    publish "$(newver 0.6.9)"
+    publish "$(newver 9.9.9)"
     printf '%064d  dist.json\n' 1 >"$UP/dist.json.sha256"
     run_tool "$UPD" --force --from "$UP"
     assert_failure 4
@@ -251,7 +251,7 @@ guard() {
 case "$o" in *.sha256) cp "$UPSTREAM/dist.json.sha256" "$o";; *) cp "$UPSTREAM/dist.json" "$o";; esac'
     UPSTREAM="$UP" OCXF_DIST_BASE="https://example.test" run_tool "$UPD"
     assert_success
-    assert_output "unchanged 0.6.8"
+    assert_output "unchanged 9.9.8"
     grep -F 'https://example.test/dist.json.sha256' "$STUB_LOG"
 }
 
@@ -282,7 +282,7 @@ hostile_refused() {
 }
 
 @test "guard: rows before latest are refused" {
-    hostile_refused '3d;s|^  \]$|  ],\n  "latest": {"version":"0.6.8","channel":"stable"}|' "canonical"
+    hostile_refused '3d;s|^  \]$|  ],\n  "latest": {"version":"9.9.8","channel":"stable"}|' "canonical"
 }
 
 @test "--force does not skip the format guards" {
@@ -291,7 +291,7 @@ hostile_refused() {
 
 @test "guard: two parsers agree" {
     for f in "$OCXF_SRC_DIR/dist.json" "$SANDBOX/fixture.json"; do
-        [ -f "$f" ] || jq -j -f "$REPO_ROOT/scripts/dist-canonical.jq" <(jq "$(newver 0.6.9)" "$OCXF_SRC_DIR/dist.json") >"$f"
+        [ -f "$f" ] || jq -j -f "$REPO_ROOT/scripts/dist-canonical.jq" <(jq "$(newver 9.9.9)" "$OCXF_SRC_DIR/dist.json") >"$f"
         # the installer's own resolver, row by row, against jq
         # .tar.xz rows are refused by resolve_release before any download, so only .tar.gz rows resolve
         jq -r '.releases[] | select(.filename | endswith(".tar.gz")) | [.version, .target, .url, .sha256] | @tsv' "$f" >"$SANDBOX/jq.tsv"
@@ -310,19 +310,19 @@ hostile_refused() {
 }
 
 @test "guard: sha256 with a trailing newline" {
-    guard nl "$(newver 0.6.9) | (.releases[0].sha256) += \"\\n\"" "backslash"
+    guard nl "$(newver 9.9.9) | (.releases[0].sha256) += \"\\n\"" "backslash"
 }
 
 @test "guard: version with a trailing newline" {
-    guard vnl "$(newver 0.6.9) | .latest.version += \"\\n\"" "backslash"
+    guard vnl "$(newver 9.9.9) | .latest.version += \"\\n\"" "backslash"
 }
 
 @test "guard: linux row that is not tar.gz" {
-    guard xz "$(newver 0.6.9) | (.releases[] | select(.version == \"0.6.9\" and .target == \"x86_64-unknown-linux-musl\")) |= (.filename = \"ocx.tar.xz\" | .url = \"$BASE_URL/v0.6.9/ocx.tar.xz\")" "x86_64-unknown-linux-musl"
+    guard xz "$(newver 9.9.9) | (.releases[] | select(.version == \"9.9.9\" and .target == \"x86_64-unknown-linux-musl\")) |= (.filename = \"ocx.tar.xz\" | .url = \"$BASE_URL/v9.9.9/ocx.tar.xz\")" "x86_64-unknown-linux-musl"
 }
 
 @test "guard: url that does not match tag and filename" {
-    guard urlm "$(newver 0.6.9) | (.releases[0].url) = \"$BASE_URL/v0.6.9/other.tar.gz\"" "does not match"
+    guard urlm "$(newver 9.9.9) | (.releases[0].url) = \"$BASE_URL/v9.9.9/other.tar.gz\"" "does not match"
 }
 
 @test "guard: a newest stable row that is not the latest version" {
