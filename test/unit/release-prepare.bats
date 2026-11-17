@@ -23,6 +23,7 @@ sed 's/"version": "1.0.0"/"version": "1.0.1"/' "$f" >"$f.new" && mv "$f.new" "$f
 echo "1.0.0 -> 1.0.1"
 EOT
     mkdir -p "$R/scripts/release"
+    # shellcheck disable=SC2016 # the generated script expands these when it runs
     {
         printf '#!/bin/sh\necho "verify-assets $(jq -r .latest.version "$1") $(jq -r .latest.version "$2")" >>"%s"\n' "$CALLS"
         printf 'exit "${FAKE_ASSETS_RC:-0}"\n'
