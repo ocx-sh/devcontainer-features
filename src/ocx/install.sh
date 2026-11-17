@@ -33,6 +33,7 @@ OCXF_WGET_BUSYBOX=0
 OCXF_WGET_HTTPS_ONLY=0
 OCXF_WGET_TLS12=0
 OCXF_WGET_CACERT=0
+OCXF_WGET_TIMEOUT=0
 OCXF_TLS_UNVALIDATED=0
 OCXF_HASH_TOOL=
 
@@ -379,6 +380,11 @@ probe_downloader() {
     case "$ocxf_help" in *--secure-protocol*) OCXF_WGET_TLS12=1 ;; esac
     case "$ocxf_help" in *--ca-certificate*) OCXF_WGET_CACERT=1 ;; esac
     if [ "$OCXF_WGET_BUSYBOX" = 1 ]; then
+        case "$ocxf_help" in *'-T SEC'*) OCXF_WGET_TIMEOUT=1 ;; esac
+    else
+        case "$ocxf_help" in *--timeout*) OCXF_WGET_TIMEOUT=1 ;; esac
+    fi
+    if [ "$OCXF_WGET_BUSYBOX" = 1 ]; then
         warn "BusyBox wget: no TLS floor and the server certificate may go unchecked; install curl for a verified download"
     fi
     if [ -n "$OCXF_CA_BUNDLE" ] && [ "$OCXF_WGET_CACERT" = 0 ]; then
@@ -393,21 +399,23 @@ download_once() {
     ocxf_ca=
     [ -z "$OCXF_CA_BUNDLE" ] || ocxf_ca=$(rootpath "$OCXF_CA_BUNDLE")
     if [ "$OCXF_DL" = curl ]; then
-        if [ "$OCXF_CURL_TLS12" = 1 ] && [ -n "$ocxf_ca" ]; then
-            curl --proto '=https' --tlsv1.2 --cacert "$ocxf_ca" -fsSL -o "$ocxf_dest" "$ocxf_url"
-        elif [ "$OCXF_CURL_TLS12" = 1 ]; then
-            curl --proto '=https' --tlsv1.2 -fsSL -o "$ocxf_dest" "$ocxf_url"
-        elif [ -n "$ocxf_ca" ]; then
-            curl --proto '=https' --cacert "$ocxf_ca" -fsSL -o "$ocxf_dest" "$ocxf_url"
-        else
-            curl --proto '=https' -fsSL -o "$ocxf_dest" "$ocxf_url"
-        fi
+        # A hung server must not block an image build: no 30 s connect, or under 1 KiB/s for 60 s, aborts the
+        # attempt (the retry loop decides). No --max-time, so a slow link still finishes the ~20 MB archive.
+        set -- --proto '=https' --connect-timeout 30 --speed-limit 1024 --speed-time 60
+        [ "$OCXF_CURL_TLS12" = 0 ] || set -- "$@" --tlsv1.2
+        [ -z "$ocxf_ca" ] || set -- "$@" --cacert "$ocxf_ca"
+        curl "$@" -fsSL -o "$ocxf_dest" "$ocxf_url"
         return
     fi
     set -- -q -O "$ocxf_dest"
     [ "$OCXF_WGET_HTTPS_ONLY" = 0 ] || set -- "$@" --https-only
     [ "$OCXF_WGET_TLS12" = 0 ] || set -- "$@" --secure-protocol=TLSv1_2
     [ -z "$ocxf_ca" ] || set -- "$@" --ca-certificate="$ocxf_ca"
+    if [ "$OCXF_WGET_TIMEOUT" = 1 ] && [ "$OCXF_WGET_BUSYBOX" = 1 ]; then
+        set -- "$@" -T 30
+    elif [ "$OCXF_WGET_TIMEOUT" = 1 ]; then
+        set -- "$@" --timeout=30 --tries=1 # --tries: the retry loop above is the only one
+    fi
     if [ "$OCXF_WGET_BUSYBOX" != 1 ]; then
         wget "$@" "$ocxf_url"
         return

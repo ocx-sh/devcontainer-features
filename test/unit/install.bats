@@ -227,7 +227,7 @@ pm_stubs() {
     serve https://setup.ocx.sh/dist.json "$SANDBOX/live.json"
     VERSION=latest inst
     assert_success
-    assert_stub_called "curl --proto =https --tlsv1.2 -fsSL -o $(grep -o "[^ ]*dist.json" "$STUB_LOG" | head -1) https://setup.ocx.sh/dist.json"
+    assert_stub_called "curl --proto =https --connect-timeout 30 --speed-limit 1024 --speed-time 60 --tlsv1.2 -fsSL -o $(grep -o "[^ ]*dist.json" "$STUB_LOG" | head -1) https://setup.ocx.sh/dist.json"
     [ "$(installed_version)" = "$V" ]
 }
 
@@ -323,6 +323,28 @@ assert_plain_form_refused() {
     assert_output --partial 'manifest has none'
 }
 
+@test "S9 curl gets a connect timeout and a stall bound" {
+    inst
+    assert_success
+    grep -q -- "curl --proto =https .*--connect-timeout 30 --speed-limit 1024 --speed-time 60 .*-o " "$STUB_LOG"
+}
+
+@test "S9 BusyBox wget gets -T only when its help lists it" {
+    rm -f "$STUB_DIR/curl"
+    make_wget
+    restrict_path sha256sum tar gzip
+    export WGET_HELP='BusyBox v1.37 multi-call binary.
+[-T SEC]'
+    inst
+    assert_success
+    grep -q -- "wget -q -O [^ ]* -T 30 https://" "$STUB_LOG"
+    : >"$STUB_LOG"
+    export WGET_HELP='BusyBox v1.37 multi-call binary.'
+    inst
+    assert_success
+    grep -q -- "wget -q -O [^ ]* https://" "$STUB_LOG"
+}
+
 @test "bundled manifest tampered exits 4 and installs nothing" {
     printf ' ' >>"$SANDBOX/src/dist.json"
     inst
@@ -340,7 +362,7 @@ assert_plain_form_refused() {
     serve "https://mirror.test/base/v$V/ocx-$MUSL.tar.gz" "$SANDBOX/fx/arc/$V-$MUSL.tgz"
     MIRRORURL=https://mirror.test/base// inst
     assert_success
-    assert_stub_called "curl --proto =https --tlsv1.2 -fsSL -o $(grep -o "[^ ]*\.tar\.gz " "$STUB_LOG" | head -1)https://mirror.test/base/v$V/ocx-$MUSL.tar.gz"
+    assert_stub_called "curl --proto =https --connect-timeout 30 --speed-limit 1024 --speed-time 60 --tlsv1.2 -fsSL -o $(grep -o "[^ ]*\.tar\.gz " "$STUB_LOG" | head -1)https://mirror.test/base/v$V/ocx-$MUSL.tar.gz"
 }
 
 @test "caBundle is passed to curl as --cacert" {
@@ -899,12 +921,13 @@ prep_pm() {
     make_wget
     export WGET_HELP='  --https-only
   --secure-protocol=PR
-  --ca-certificate=FILE'
+  --ca-certificate=FILE
+  --timeout=SECONDS'
     restrict_path sha256sum tar gzip
     root_file /etc/mine.pem x
     CABUNDLE=/etc/mine.pem inst
     assert_success
-    grep -q -- "-q -O .* --https-only --secure-protocol=TLSv1_2 --ca-certificate=$__OCXF_TESTING_ROOT/etc/mine.pem https://" "$STUB_LOG"
+    grep -q -- "-q -O .* --https-only --secure-protocol=TLSv1_2 --ca-certificate=$__OCXF_TESTING_ROOT/etc/mine.pem --timeout=30 --tries=1 https://" "$STUB_LOG"
 }
 
 @test "wget (GNU) without a CA option and without optional flags" {
@@ -976,17 +999,17 @@ prep_pm() {
     root_file /etc/mine.pem x
     CABUNDLE=/etc/mine.pem inst
     assert_success
-    grep -q -- "curl --proto =https --cacert $__OCXF_TESTING_ROOT/etc/mine.pem -fsSL" "$STUB_LOG"
+    grep -q -- "curl --proto =https --connect-timeout 30 --speed-limit 1024 --speed-time 60 --cacert $__OCXF_TESTING_ROOT/etc/mine.pem -fsSL" "$STUB_LOG"
     : >"$STUB_LOG"
     inst
     assert_success
-    grep -q -- "curl --proto =https -fsSL" "$STUB_LOG"
+    grep -q -- "curl --proto =https --connect-timeout 30 --speed-limit 1024 --speed-time 60 -fsSL" "$STUB_LOG"
 }
 
 @test "curl with --tlsv1.2 and no CA bundle option" {
     inst
     assert_success
-    grep -q -- "curl --proto =https --tlsv1.2 -fsSL" "$STUB_LOG"
+    grep -q -- "curl --proto =https --connect-timeout 30 --speed-limit 1024 --speed-time 60 --tlsv1.2 -fsSL" "$STUB_LOG"
 }
 
 @test "shasum -a 256 works as the sha256 tool" {
