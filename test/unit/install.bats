@@ -345,6 +345,35 @@ assert_plain_form_refused() {
     grep -q -- "wget -q -O [^ ]* https://" "$STUB_LOG"
 }
 
+# wget_redirect_case <help text>: a rolling manifest whose server answers with a Location header.
+wget_redirect_case() {
+    rm -f "$STUB_DIR/curl"
+    make_wget
+    export WGET_HELP="$1"
+    restrict_path sha256sum tar gzip
+    cp "$SANDBOX/src/dist.json" "$SANDBOX/live.json"
+    serve https://setup.ocx.sh/dist.json "$SANDBOX/live.json"
+}
+
+@test "S3 GNU wget: a Location header that is not https exits 3 and installs nothing" {
+    wget_redirect_case '  --server-response'
+    WGET_STDERR='  Location: http://evil.test/dist.json' VERSION=latest inst
+    assert_failure 3
+    assert_output --partial 'redirect'
+    assert_output --partial 'http://evil.test/dist.json'
+    [ ! -e "$__OCXF_TESTING_ROOT/usr/local/bin/ocx" ]
+}
+
+@test "S3 BusyBox wget: a Location header that is not https exits 3, an https or relative one is fine" {
+    wget_redirect_case 'BusyBox v1.37 multi-call binary.
+Show server response'
+    WGET_STDERR='  Location: HTTP://evil.test/x' VERSION=latest inst
+    assert_failure 3
+    WGET_STDERR='  Location: https://cdn.test/x
+  Location: /rel/path' VERSION=latest inst
+    assert_success
+}
+
 @test "bundled manifest tampered exits 4 and installs nothing" {
     printf ' ' >>"$SANDBOX/src/dist.json"
     inst
@@ -922,12 +951,13 @@ prep_pm() {
     export WGET_HELP='  --https-only
   --secure-protocol=PR
   --ca-certificate=FILE
-  --timeout=SECONDS'
+  --timeout=SECONDS
+  --server-response'
     restrict_path sha256sum tar gzip
     root_file /etc/mine.pem x
     CABUNDLE=/etc/mine.pem inst
     assert_success
-    grep -q -- "-q -O .* --https-only --secure-protocol=TLSv1_2 --ca-certificate=$__OCXF_TESTING_ROOT/etc/mine.pem --timeout=30 --tries=1 https://" "$STUB_LOG"
+    grep -q -- "-q -O .* --https-only --secure-protocol=TLSv1_2 --ca-certificate=$__OCXF_TESTING_ROOT/etc/mine.pem --timeout=30 --tries=1 -S https://" "$STUB_LOG"
 }
 
 @test "wget (GNU) without a CA option and without optional flags" {
