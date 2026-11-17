@@ -33,21 +33,28 @@ image_line() {
     awk -v a="$1" '$1 !~ /^#/ && $1 == a { print; exit }' test/images.txt
 }
 
-# run_cli <log> <image ref>: the devcontainer CLI test of the feature on one base image.
+# run_locked <log> <command...>: a devcontainer CLI run, output to the log.
 # The CLI names its working directory after Date.now(), so two runs started in the same millisecond
-# collide (EEXIST). Starts are spaced by a lock held for the first second of each run. The CLI's own
-# end-of-run cleanup removes EVERY container labelled devcontainer.is_test_run, including a sibling
-# run's, so it is turned off here; cleanup_run removes only this run's containers.
-run_cli() {
+# collide (EEXIST). Starts are spaced by a lock held for the first second of each run.
+run_locked() {
     mkdir -p "$OUT/images"
     __lock=$OUT/images/.start.lock
+    __log=$1
+    shift
     until mkdir "$__lock" 2>/dev/null; do sleep 0.3; done
-    # shellcheck disable=SC2086 # DC is a command line of several words on purpose
-    $DC features test -p . -f ocx --skip-scenarios --skip-duplicated --preserve-test-containers -i "$2" >"$1" 2>&1 &
+    "$@" >"$__log" 2>&1 &
     __pid=$!
     sleep 1.2
     rmdir "$__lock"
     wait "$__pid"
+}
+
+# run_cli <log> <image ref>: the devcontainer CLI test of the feature on one base image.
+# The CLI's own end-of-run cleanup removes EVERY container labelled devcontainer.is_test_run,
+# including a sibling run's, so it is turned off here; cleanup_run removes only this run's containers.
+run_cli() {
+    # shellcheck disable=SC2086 # DC is a command line of several words on purpose
+    run_locked "$1" $DC features test -p . -f ocx --skip-scenarios --skip-duplicated --preserve-test-containers -i "$2"
 }
 
 # cleanup_run <log>...: remove what the CLI runs named in the logs left behind. Every run works in
@@ -68,7 +75,7 @@ cleanup_run() {
 # junit <alias> <log> <rc> <extra cases file>: JUnit XML from the ok / not ok lines of the log.
 # Always one more case for the CLI run itself, so a build failure (no check lines) is red.
 junit() {
-    awk -v suite="image-$1" -v rc="$3" '
+    awk -v suite="${JUNIT_KIND:-image}-$1" -v rc="$3" '
     function esc(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); gsub(/"/, "\\&quot;", s); gsub(/[^\t\n\r -~]/, "?", s); return s }
     function flush() { if (name != "") { n++; cases = cases sprintf("<testcase classname=\"%s\" name=\"%s\"", suite, esc(name)); if (bad) { f++; cases = cases sprintf("><failure message=\"not ok\">%s</failure></testcase>\n", esc(detail)) } else cases = cases "/>\n" } name = ""; bad = 0; detail = "" }
     /^ok - /      { flush(); name = substr($0, 6) }
@@ -81,16 +88,16 @@ junit() {
         cases = cases sprintf("<testcase classname=\"%s\" name=\"devcontainer features test exits 0\"", suite)
         if (rc != 0) { f++; for (i = NR - 39; i <= NR; i++) if (i > 0) t = t tail[i % 40] "\n"; cases = cases sprintf("><failure message=\"exit %s\">%s</failure></testcase>\n", rc, esc(t)) } else cases = cases "/>\n"
         printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite name=\"%s\" tests=\"%d\" failures=\"%d\">\n%s", suite, n, f + 0, cases
-    }' "$2" >"$OUT/junit/image-$1.xml.tmp"
+    }' "$2" >"$OUT/junit/${JUNIT_KIND:-image}-$1.xml.tmp"
     if [ -s "$4" ]; then
         # extra cases (the busybox negative check) go in before the closing tag
-        sed '$d' "$OUT/junit/image-$1.xml.tmp" >"$OUT/junit/image-$1.xml"
-        cat "$4" >>"$OUT/junit/image-$1.xml"
-        echo '</testsuite>' >>"$OUT/junit/image-$1.xml"
-        rm -f "$OUT/junit/image-$1.xml.tmp"
+        sed '$d' "$OUT/junit/${JUNIT_KIND:-image}-$1.xml.tmp" >"$OUT/junit/${JUNIT_KIND:-image}-$1.xml"
+        cat "$4" >>"$OUT/junit/${JUNIT_KIND:-image}-$1.xml"
+        echo '</testsuite>' >>"$OUT/junit/${JUNIT_KIND:-image}-$1.xml"
+        rm -f "$OUT/junit/${JUNIT_KIND:-image}-$1.xml.tmp"
     else
-        echo '</testsuite>' >>"$OUT/junit/image-$1.xml.tmp"
-        mv "$OUT/junit/image-$1.xml.tmp" "$OUT/junit/image-$1.xml"
+        echo '</testsuite>' >>"$OUT/junit/${JUNIT_KIND:-image}-$1.xml.tmp"
+        mv "$OUT/junit/${JUNIT_KIND:-image}-$1.xml.tmp" "$OUT/junit/${JUNIT_KIND:-image}-$1.xml"
     fi
 }
 

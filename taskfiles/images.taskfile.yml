@@ -28,3 +28,29 @@ tasks:
     cmds:
       - "{{.IMAGES_OCX}} pnpm install --frozen-lockfile"
       - "JOBS={{.JOBS}} {{.IMAGES_OCX}} sh test/images/run-all.sh"
+
+  test:scenarios:
+    desc: "The scenario suite (test/ocx/scenarios.json, duplicate, fail-* and up-proof), JOBS at a time (default 3); one table. Optional SCENARIO='name ...' runs only those"
+    vars:
+      JOBS: '{{.JOBS | default "3"}}'
+    cmds:
+      - "{{.IMAGES_OCX}} pnpm install --frozen-lockfile"
+      - "JOBS={{.JOBS}} {{.IMAGES_OCX}} sh test/images/run-scenarios.sh {{.SCENARIO}}"
+
+  run:
+    desc: "A throwaway dev container with the local feature and a sample project, a login shell as USER (CMD='...' runs a command instead). Removed on exit; OPTIONS='{\"version\":\"latest\"}' sets feature options"
+    interactive: true
+    # CLI variables are not environment variables, so the two optional ones are handed over here.
+    env:
+      CMD: "{{.CMD}}"
+      OPTIONS: "{{.OPTIONS}}"
+    requires:
+      vars:
+        # IMAGE: keep in step with test:image (test/unit/images.bats fails when they differ).
+        - name: IMAGE
+          enum: [debian, ubuntu, alpine, fedora, rocky, alma, ubi-minimal, amazonlinux, opensuse, arch, wolfi, busybox, devcontainers-ubuntu, devcontainers-debian, devcontainers-alpine]
+        - name: USER
+          enum: [root, vscode, node]
+    cmds:
+      - "{{.IMAGES_OCX}} pnpm install --frozen-lockfile"
+      - "{{.IMAGES_OCX}} sh test/images/run-workspace.sh {{.IMAGE}} {{.USER}}"

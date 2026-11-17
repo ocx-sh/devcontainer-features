@@ -1,0 +1,215 @@
+{
+  "version-exact": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "version": "0.6.7"
+      }
+    }
+  },
+  "version-latest": {
+    "image": "alpine:3",
+    "features": {
+      "ocx": {
+        "version": "latest"
+      }
+    }
+  },
+  "libc-gnu": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "libc": "gnu"
+      }
+    }
+  },
+  "libc-auto-alpine": {
+    "image": "alpine:3",
+    "features": {
+      "ocx": {
+        "libc": "auto"
+      }
+    }
+  },
+  "libc-auto-debian": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "libc": "auto"
+      }
+    }
+  },
+  "install-dir": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "installDir": "/usr/local/sbin"
+      }
+    }
+  },
+  "no-update-check-off": {
+    "image": "rockylinux:9-minimal",
+    "features": {
+      "ocx": {
+        "noUpdateCheck": false
+      }
+    }
+  },
+  "consent-custom": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "consentPaths": "/workspaces/*:/srv/projects/*"
+      }
+    }
+  },
+  "consent-empty": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "consentPaths": ""
+      }
+    }
+  },
+  "pull-off": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "pull": false
+      }
+    }
+  },
+  "pull-groups": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "pullGroups": "extra"
+      }
+    }
+  },
+  "shell-activation-off": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "remoteUser": "vscode",
+    "features": {
+      "ocx": {
+        "shellActivation": false,
+        "ocxHome": "/home/vscode/.ocx-alt"
+      }
+    }
+  },
+  "ocx-home": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "remoteUser": "vscode",
+    "features": {
+      "ocx": {
+        "ocxHome": "/home/vscode/.ocx-alt"
+      }
+    }
+  },
+  "ca-bundle": {
+    "image": "ocx-test/small-ca:local",
+    "features": {
+      "ocx": {
+        "caBundle": "/etc/ocx-test/ca.pem"
+      }
+    }
+  },
+  "managed-config": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "managedConfig": "ghcr.io/ocx-sh/devcontainer-features-test/no-such-managed-config:1"
+      }
+    }
+  },
+  "dist-url": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "distUrl": "https://setup.ocx.sh/dist.json"
+      }
+    }
+  },
+  "dist-url-digest": {
+    "image": "alpine:3",
+    "features": {
+      "ocx": {
+        "distUrl": "https://setup.ocx.sh/dist/@DIST_DIGEST@.json"
+      }
+    }
+  },
+  "mirror-url": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {
+        "mirrorUrl": "https://github.com/ocx-sh/ocx/releases/download"
+      }
+    }
+  },
+  "user-root": {
+    "image": "debian:stable-slim",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "user-existing": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "remoteUser": "vscode",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "user-container-root-remote-vscode": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "containerUser": "root",
+    "remoteUser": "vscode",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "user-container-vscode-remote-root": {
+    "image": "mcr.microsoft.com/devcontainers/base:alpine",
+    "containerUser": "vscode",
+    "remoteUser": "root",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "user-created-later": {
+    "image": "debian:stable-slim",
+    "remoteUser": "dev",
+    "features": {
+      "ghcr.io/devcontainers/features/common-utils:2": {
+        "username": "dev",
+        "installZsh": false,
+        "installOhMyZsh": false,
+        "upgradePackages": false
+      },
+      "ocx": {}
+    }
+  },
+  "hook-project-sh": {
+    "image": "alpine:3",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "hook-no-lock": {
+    "image": "rockylinux:9-minimal",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "hook-no-project": {
+    "image": "fedora:45",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "reinstall": {
+    "image": "fedora:45",
+    "features": {
+      "ocx": {}
+    }
+  }
+}
