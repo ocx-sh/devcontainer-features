@@ -13,6 +13,7 @@
 # env: FEATURE_VERSION, OCX_VERSION   x.y.z of the feature and of the pinned ocx
 #      DEFAULT_BRANCH, REPO           default branch name and owner/repo (the registry namespace)
 #      GH_TOKEN, ACTOR                job token and user for the git push and the ghcr.io login
+#      EXPECT_SHA                     when set, the default branch head this run was prepared from; a moved head stops the run
 #      DRY_RUN                        "true" validates and packages, but commits, pushes, tags and publishes nothing
 #      GITHUB_STEP_SUMMARY            written when set
 # Exit: 0 ok, 1 push or publish failed, 2 bad input; verify.sh failures pass through.
@@ -47,6 +48,12 @@ fi
 
 # A job-scoped Basic header: the token never lands in .git/config or in the remote URL.
 hdr="http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN:?}" | base64 | tr -d '\n')"
+
+# A queued run can start from a stale base. Stop cleanly before committing rather than fail the push later.
+if [ -n "${EXPECT_SHA:-}" ]; then
+    head=$(git -c "$hdr" ls-remote origin "refs/heads/$DEFAULT_BRANCH" | cut -f1) || die "cannot read the head of $DEFAULT_BRANCH" 1
+    [ "$head" = "$EXPECT_SHA" ] || die "$DEFAULT_BRANCH moved to ${head:-?} since this run started from $EXPECT_SHA; nothing was published, the next run starts from the new head" 1
+fi
 
 git add -A -- src CHANGELOG.md site/src/content/docs
 if ! git diff --cached --quiet; then

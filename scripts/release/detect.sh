@@ -13,7 +13,7 @@
 #      GITHUB_OUTPUT, GITHUB_STEP_SUMMARY   written when set
 #      REPO, ACTOR, GH_TOKEN   when REPO is set and the run would otherwise do nothing, recover a
 #                        feature version whose tag exists but that the registry does not have (needs git, jq)
-# Outputs: changed (digest differs), run (changed, PUBLISH_CURRENT, or recover), recover, remote_sha.
+# Outputs: changed (digest differs), run (changed, PUBLISH_CURRENT, or recover), recover, published (registry has the feature version), remote_sha.
 # Exit: 0 ok (changed or not), 2 malformed payload or sidecar, 3 network or an unexpected registry answer.
 set -eu
 
@@ -66,30 +66,29 @@ run=$changed
 # and the registry has no such version, run again and publish it. No tag means never published at all,
 # the state before the first release, which only an explicit publish_current starts.
 recover=false
+published=false
 if [ "$run" = false ] && [ -n "${REPO:-}" ]; then
     fv=$(jq -r '.version // empty' "$root/src/ocx/devcontainer-feature.json") || fv=
     case "$fv" in [0-9]*.[0-9]*.[0-9]*) ;; *) die "feature version '$fv' is not x.y.z" ;; esac
-    tagged=false
-    rc=0
-    (cd "$root" && git ls-remote --exit-code --tags origin "refs/tags/v$fv" >/dev/null 2>&1) || rc=$?
-    case "$rc" in 0) tagged=true ;; 2) ;; *) die "cannot list the remote tags" 3 ;; esac
-    if [ "$tagged" = true ]; then
-        tmp=$(mktemp -d)
-        trap 'rm -rf "$tmp"' EXIT
-        # Authenticated, so a private package answers 404 for a missing version like a public one; anonymous cannot tell them apart.
-        printf 'user = "%s:%s"\n' "${ACTOR:?}" "${GH_TOKEN:?}" |
-            curl -fsS --retry 3 --retry-all-errors --max-time 30 -K - "https://ghcr.io/token?service=ghcr.io&scope=repository:$REPO/ocx:pull" >"$tmp/token.json" ||
-            die "cannot get a registry token" 3
-        printf 'Authorization: Bearer %s\n' "$(jq -r .token "$tmp/token.json")" >"$tmp/auth"
-        code=$(curl -sS --retry 3 --retry-all-errors --max-time 30 -I -o /dev/null -w '%{http_code}' -H "@$tmp/auth" \
-            -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json' \
-            "https://ghcr.io/v2/$REPO/ocx/manifests/$fv") || die "cannot ask the registry for $fv" 3
-        case "$code" in
-            200) ;;
-            404) recover=true run=true ;;
-            *) die "registry answered $code for ocx:$fv" 3 ;;
-        esac
-    fi
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    # Authenticated, so a private package answers 404 for a missing version like a public one; anonymous cannot tell them apart.
+    printf 'user = "%s:%s"\n' "${ACTOR:?}" "${GH_TOKEN:?}" |
+        curl -fsS --retry 3 --retry-all-errors --max-time 30 -K - "https://ghcr.io/token?service=ghcr.io&scope=repository:$REPO/ocx:pull" >"$tmp/token.json" ||
+        die "cannot get a registry token" 3
+    printf 'Authorization: Bearer %s\n' "$(jq -r .token "$tmp/token.json")" >"$tmp/auth"
+    code=$(curl -sS --retry 3 --retry-all-errors --max-time 30 -I -o /dev/null -w '%{http_code}' -H "@$tmp/auth" \
+        -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json' \
+        "https://ghcr.io/v2/$REPO/ocx/manifests/$fv") || die "cannot ask the registry for $fv" 3
+    case "$code" in
+        200) published=true ;;
+        404)
+            rc=0
+            (cd "$root" && git ls-remote --exit-code --tags origin "refs/tags/v$fv" >/dev/null 2>&1) || rc=$?
+            case "$rc" in 0) recover=true run=true ;; 2) ;; *) die "cannot list the remote tags" 3 ;; esac
+            ;;
+        *) die "registry answered $code for ocx:$fv" 3 ;;
+    esac
 fi
 
 if [ "$run" = true ]; then
@@ -105,6 +104,7 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
         echo "changed=$changed"
         echo "run=$run"
         echo "recover=$recover"
+        echo "published=$published"
         echo "remote_sha=$remote"
     } >>"$GITHUB_OUTPUT"
 fi
