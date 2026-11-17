@@ -5,7 +5,7 @@
 version: "3"
 
 vars:
-  IMAGE: ocx-feature-unit
+  UNIT_IMAGE: ocx-feature-unit
   # CI's lint job pulls default+lint and its test job default+test (the suite's tools live in the image).
   LINT_OCX: ocx exec -g default -g lint --
   TEST_OCX: ocx exec -g default --
@@ -20,7 +20,7 @@ tasks:
     desc: Build the interpreter image the unit suite runs in (cached by Docker)
     run: once
     cmds:
-      - docker build -q -t {{.IMAGE}} -f test/unit/Dockerfile test/unit
+      - docker build -q -t {{.UNIT_IMAGE}} -f test/unit/Dockerfile test/unit
 
   test:unit:
     desc: "Unit suite on dash, busybox sh and bash --posix, then the coverage gate. Filter: FILE=test/unit/lib.bats, LEGS='dash' (newline list)"
@@ -35,7 +35,7 @@ tasks:
         docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp
         -e OCXF_FILE={{.FILE}} -e "OCXF_LEGS={{.LEGS}}"
         -v "$PWD:/work:ro" -v "$PWD/target/reports:/work/target/reports"
-        -w /work {{.IMAGE}} sh test/unit/run-legs.sh
+        -w /work {{.UNIT_IMAGE}} sh test/unit/run-legs.sh
 
   dist:check:
     desc: Compare the vendored release manifest with setup.ocx.sh; exit 10 when an update is available
