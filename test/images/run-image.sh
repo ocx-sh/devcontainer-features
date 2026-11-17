@@ -42,8 +42,10 @@ image_line() {
 run_locked() {
     __log=$1
     shift
-    mkdir -p "$OUT/images" "${OCXF_CLI_TMP_ROOT:-target/cli-tmp}"
-    __t=$(mktemp -d "$(cd "${OCXF_CLI_TMP_ROOT:-target/cli-tmp}" && pwd)/run.XXXXXX")
+    # Outside any git repository: the CLI mounts the git root of the work directory as the workspace,
+    # and a work dir inside this repo would hand the container the repo itself (its ocx.toml and .ocx).
+    mkdir -p "$OUT/images"
+    __t=$(mktemp -d "${OCXF_CLI_TMP_ROOT:-/tmp}/ocxf-cli.XXXXXX")
     printf '%s\n' "$__t" >"$__log.tmpdir"
     TMPDIR=$__t "$@" >"$__log" 2>&1
 }
@@ -58,16 +60,16 @@ run_cli() {
 
 # cleanup_run <log>...: remove exactly what the runs behind these logs created: containers labelled
 # with the run's own work directory, the images the log says were built (`naming to ...`), and the
-# run's private TMPDIR (named run.XXXXXX under target/cli-tmp, taken from the work directory path in the log).
+# run's private TMPDIR (named ocxf-cli.XXXXXX under the system temp dir, taken from the work directory path in the log).
 cleanup_run() {
     for __log in "$@"; do
         [ -f "$__log" ] || continue
-        grep -o '[^ "=]*/run\.[A-Za-z0-9]*/devcontainercli/container-features-test/[0-9]*' "$__log" | sort -u | while read -r __w; do
+        grep -o '[^ "=]*/ocxf-cli\.[A-Za-z0-9]*/devcontainercli/container-features-test/[0-9]*' "$__log" | sort -u | while read -r __w; do
             docker ps -aq --filter "label=devcontainer.local_folder=$__w" | xargs -r docker rm -f >/dev/null 2>&1 || :
         done
         grep -o 'naming to docker.io/library/vsc-[^ ]*' "$__log" | sed 's|.*/library/||; s|:latest$||' | sort -u | xargs -r docker rmi -f >/dev/null 2>&1 || :
         [ ! -f "$__log.tmpdir" ] || while read -r __t; do
-            case $__t in */run.*) ;; *) continue ;; esac
+            case $__t in */ocxf-cli.*) ;; *) continue ;; esac
             # a scenario that ran as root may leave root-owned files in the bind-mounted work dir
             rm -rf "$__t" 2>/dev/null || {
                 docker run --rm -v "$__t:/w" --entrypoint sh alpine:3 -c 'rm -rf /w/* /w/.[!.]*' >/dev/null 2>&1 || :
