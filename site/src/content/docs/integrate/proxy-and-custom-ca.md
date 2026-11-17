@@ -31,6 +31,7 @@ When the container runs, `ocx pull` fetches the tools in `ocx.toml` from the reg
 The install script sets no proxy of its own. It calls `curl`, which reads the proxy variables from the build environment.
 Pass them as build arguments in a `devcontainer.json` that builds from a Dockerfile:
 
+<!-- doc-norun: the build args take effect only behind a proxy, and the gate has none -->
 <!-- doc: proxy-build-args -->
 ```jsonc
 {
@@ -46,6 +47,7 @@ Pass them as build arguments in a `devcontainer.json` that builds from a Dockerf
   }
 }
 ```
+<!-- /doc-norun -->
 
 Docker treats `HTTPS_PROXY`, `HTTP_PROXY` and `NO_PROXY` as predefined build arguments, so the Dockerfile needs no `ARG` line for them.
 The `Dockerfile` here holds one line, such as `FROM mcr.microsoft.com/devcontainers/base:ubuntu`.
@@ -117,6 +119,7 @@ At run time `ocx` reads the standard proxy variables: `HTTPS_PROXY`, `HTTP_PROXY
 There is no ocx-specific proxy setting.
 The build arguments above do not reach the running container, so set the variables in `containerEnv`:
 
+<!-- doc-norun: the containerEnv proxy takes effect only behind a proxy, and the gate has none -->
 <!-- doc: proxy-runtime-env -->
 ```jsonc
 {
@@ -130,6 +133,7 @@ The build arguments above do not reach the running container, so set the variabl
   }
 }
 ```
+<!-- /doc-norun -->
 
 ## Check it works {#verify}
 

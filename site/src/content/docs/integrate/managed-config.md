@@ -94,7 +94,7 @@ With `managedConfig` set to an address that serves nothing, the create log shows
 ```console
 error: failed to sync the managed-config snapshot: failed to fetch managed config: ... could not connect to 'localhost:9' over https ...
 ocx-feature: warning: ocx config setup failed with exit code 75.
-  attempted: /usr/local/bin/ocx config setup --managed-config localhost:9/acme/fleet:1
+  attempted: /usr/local/bin/ocx config setup --managed-config=localhost:9/acme/fleet:1
   fix: check the network, mirror and proxy settings, then rerun the container command
 ```
 
