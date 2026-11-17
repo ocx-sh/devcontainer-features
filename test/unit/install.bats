@@ -430,6 +430,10 @@ Show server response'
     stub tar 'exit 0'
     inst
     assert_failure 4
+    # the three lines troubleshooting/install-errors quotes
+    assert_output --partial 'ocx-feature: error: checksum mismatch for ocx-'
+    assert_output --partial '  expected: '
+    assert_output --partial '  got:      '
     run grep -c '^tar' "$STUB_LOG"
     assert_output 0
 }
@@ -906,6 +910,17 @@ prep_pm() {
     assert_failure 2
     assert_output --partial "ca-bundle"
     assert_output --partial "caBundle option"
+}
+
+@test "docs: only the CA bundle missing and no package manager" {
+    no_applets
+    rm -rf "$__OCXF_TESTING_ROOT/etc/ssl"
+    restrict_path sha256sum tar gzip
+    inst
+    assert_failure 2
+    # the two lines troubleshooting/install-errors quotes
+    assert_output --partial 'ocx-feature: installing missing prerequisites: ca-bundle'
+    assert_output --partial 'ocx-feature: error: missing: ca-bundle, and no supported package manager was found; install them in the base image, or set the caBundle option to a PEM file in the image'
 }
 
 @test "missing tar and gzip are installed by name" {

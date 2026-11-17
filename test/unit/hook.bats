@@ -113,6 +113,10 @@ warnings() { printf '%s\n' "$output" | grep -c 'warning:' || true; }
     assert_output --partial 'config setup'
     assert_output --partial '75'
     assert_output --partial 'network'
+    # the lines integrate/managed-config and troubleshooting/restore-warnings quote
+    assert_output --partial 'ocx-feature: warning: ocx config setup failed with exit code 75.'
+    assert_output --partial 'config setup --managed-config=ocx.sh/c/d:u'
+    assert_output --partial 'fix: check the network, mirror and proxy settings, then rerun the container command'
 }
 
 @test "on-create exit 64 names the missing source" {
@@ -166,6 +170,9 @@ warnings() { printf '%s\n' "$output" | grep -c 'warning:' || true; }
     assert_success
     [ "$(warnings)" = 1 ]
     assert_output --partial 'owned by another user'
+    # the line troubleshooting/restore-warnings quotes
+    assert_output --partial 'ocx-feature: warning: not pulling: '
+    assert_output --partial ' is owned by another user and this hook runs as root, which would take over ocx.lock and the toolchain links; run ocx pull as that user'
     refute_stub_called "ocx pull"
 }
 
@@ -277,4 +284,15 @@ stat_stub_owner() {
     assert_output --partial '/no/such/home'
     assert_output --partial 'writable'
     refute_output --partial 'ownership'
+    # the lines guides/non-root-and-custom-users quotes
+    assert_output --partial 'ocx-feature: warning: ocx pull failed with exit code 74.'
+    assert_output --partial 'fix: the ocxHome directory /no/such/home must exist and be writable by the user who opens the container; the feature does not create it'
+}
+
+@test "docs: exit 74 without ocxHome points at the file ownership" {
+    stub ocx 'exit 74'
+    hook update-content
+    assert_success
+    assert_output --partial 'ocx-feature: warning: ocx pull failed with exit code 74.'
+    assert_output --partial 'fix: check file ownership of ocx.toml, ocx.lock and .ocx in the workspace'
 }

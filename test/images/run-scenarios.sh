@@ -128,6 +128,20 @@ judge() {
                 printf 'not ok - the build log says: %s\n' "$msg" >>"$log"
                 bad=1
             fi
+            # `also`: more text of the same message (the lines the docs quote), each a fixed string of the log
+            also=$(jq -r --arg n "$name" '.[$n].also[]?' test/images/failures.json)
+            if [ -n "$also" ]; then
+                while IFS= read -r a; do
+                    if grep -F -q -e "$a" "$log"; then
+                        printf 'ok - the build log says: %s\n' "$a" >>"$log"
+                    else
+                        printf 'not ok - the build log says: %s\n' "$a" >>"$log"
+                        bad=1
+                    fi
+                done <<EOF
+$also
+EOF
+            fi
             # a failed build is the expected outcome, so the CLI's own exit status no longer counts
             rc=$bad
             return "$bad"
