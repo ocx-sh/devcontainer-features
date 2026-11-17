@@ -1,0 +1,6 @@
+# Link check over the built site (`task site:check`): internal links and fragments, offline, so a third-party
+# outage never blocks a merge. External links are checked by hand with `lychee --no-offline`.
+no_progress = true
+index_files = ["index.html"]
+offline = true
+include_fragments = "anchor-only"

@@ -1,9 +1,9 @@
 [metadata]
 lock_version = 4
 declaration_hash_version = 1
-declaration_hash = "sha256:9ef035dc0d41cd11c4a9a5e37b7f0bebfca264569ef9a82326f0e8b19bdc57d2"
+declaration_hash = "sha256:9cc3d683f73516b7b04b81b01acb274ddd81a0b2cd5d2e1833c2dcd2c901f0e8"
 generated_by = "ocx 0.6.8"
-generated_at = "2026-11-16T23:44:24Z"
+generated_at = "2026-11-16T23:58:14Z"
 
 [[tool]]
 name = "node"
@@ -46,6 +46,35 @@ declared = "ocx.sh/go-task/task:3.54.0"
 "linux/arm64" = "sha256:6608d11c80aff37c102be66cb3f5e0dcefa2a457faca0f78b316634063f02a0b"
 "windows/amd64" = "sha256:627ff007505718bf09a78cc70f66f9bc9e6efc798e17fdde660899801c4899c2"
 "windows/arm64" = "sha256:3146e36c163498c561ef78f637899282a8884896dc25861fc0797a1bfed882f9"
+
+[[tool]]
+name = "lychee"
+group = "docs"
+repository = "ocx.sh/lychee/lychee"
+declared = "ocx.sh/lychee/lychee:0.24.2"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:69d2e005250872a67fc687cb88423baf25a496d5f2017aaacce7337d8dd4ef41"
+"darwin/arm64" = "sha256:5fc7b3640f5e5e5404b81baac2aa91acb87e5490a63c2ad79ce94906d4467a6e"
+"linux/amd64" = "sha256:fb090cfaa91ba0fcfbe963185add1c72a1a18a4cfcbe560d84bd003ab9ddbb81"
+"linux/arm64" = "sha256:9e78ff5b9e52cc69e8b8245e655663a462abc05c47d98c691e71d8ba1caa87fa"
+"windows/amd64" = "sha256:b0d8f87626a38fa2c58ff6f69671aa6090f7da791e4c3ae59158960eb809fc65"
+
+[[tool]]
+name = "uv"
+group = "docs"
+repository = "ocx.sh/astral-sh/uv"
+declared = "ocx.sh/astral-sh/uv:0.13.0"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:3019a84eccc4cd68eda3da6a379ae0b9d4517bce40c17c2a654854c7da84b4cd"
+"darwin/arm64" = "sha256:325f75fa4b634e79d84826a5ea4a5ce648f49f767510a844860496566df47574"
+"linux/amd64" = "sha256:9992716f235879ad6ec57331c924c89a2133af9ccdc2ed08c918a1f89065c84b"
+"linux/amd64+libc.glibc" = "sha256:6d6b3885aaf55ab4ca7ee091235278abbcdf85f97d6e3a03eeda45b942af4648"
+"linux/arm64" = "sha256:c7533bfbd2428fa67ac6870d371e1ad804d8025ddfc44a01a42e3fef443b9e28"
+"linux/arm64+libc.glibc" = "sha256:07d2102476f6414cfe738c301797291a896f8a2d8705b3f89f078e7d6de70fcd"
+"windows/amd64" = "sha256:a380728fec87ec4dfdf98fe6ce56352bc4ac8b26ee4adb0fad5694335845f3fa"
+"windows/arm64" = "sha256:3499f5a32cc688ba437e0f2dcd5f6115faf6065f82af5cc41185767192d9390e"
 
 [[tool]]
 name = "actionlint"

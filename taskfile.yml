@@ -9,6 +9,9 @@ includes:
   baseline:
     taskfile: ./taskfiles/baseline.taskfile.yml
     flatten: true
+  site:
+    taskfile: ./taskfiles/site.taskfile.yml
+    flatten: true
 
 tasks:
   verify:
@@ -37,7 +40,9 @@ tasks:
   ci:docs:
     desc: Docs site build and Lighthouse gate
     cmds:
-      - echo "no site lighthouse gate yet - wire site:lighthouse here"
+      - task: site:build
+      - task: site:check
+      - task: site:lighthouse
 
   ci:deep:
     desc: Deep tier (nightly verify-deep); JUnit XML goes to target/reports/junit/

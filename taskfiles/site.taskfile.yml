@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+#
+# The docs site (site/, ocx.sh/integrations/devcontainer/), included flat from the root taskfile.yml.
+# Run as `ocx exec -- task <name>`; CI's docs job reaches these through `task ci:docs`.
+version: "3"
+
+vars:
+  CHECKS: "{{.ROOT_DIR}}/.claude/rules/docs-quality/checks"
+  # Every tool the site tasks use sits in the default or docs group (ocx.toml).
+  OCX: ocx exec -g default -g docs --
+
+tasks:
+  site:install:
+    desc: Install the site's dependencies from the committed lockfile
+    run: once
+    dir: site
+    cmds:
+      - "{{.OCX}} pnpm install --frozen-lockfile"
+
+  site:dev:
+    desc: Live site at http://localhost:4321/integrations/devcontainer/
+    deps: [site:install]
+    dir: site
+    cmds:
+      - "{{.OCX}} pnpm run dev"
+
+  site:build:
+    desc: Build the Starlight site into site/dist, Pagefind index included
+    run: once
+    deps: [site:install]
+    dir: site
+    cmds:
+      - "{{.OCX}} pnpm run build"
+
+  site:docs:
+    desc: Run the docs-quality checks over the pages (declaration, prose, page type, landing, examples, raw links)
+    dir: site
+    cmds:
+      - for: [doc_declaration, prose, page_type, landing_check, doc_examples, links_raw]
+        # uv finds or fetches the Python 3.11 the checks need; each check exits 1 on a finding.
+        cmd: "{{.OCX}} uv run --no-project --quiet --python '>=3.11' python {{.CHECKS}}/{{.ITEM}}.py --root src/content/docs"
+
+  site:check:
+    desc: Gate the built site - docs-quality checks, budget tests, ocx-site check (claim, layout, Pagefind) and an internal link and anchor check
+    deps: [site:build]
+    dir: site
+    cmds:
+      - task: site:docs
+      - "{{.OCX}} pnpm run test"
+      - "{{.OCX}} pnpm run check"
+      # lychee resolves root-relative links against a root that carries the claim path, offline (site/lychee.toml);
+      # --include keeps it to this section, because ocx-site check already judged links into other claims.
+      - cmd: |
+          rm -rf .lychee-root && mkdir -p .lychee-root/integrations && cp -r dist .lychee-root/integrations/devcontainer
+          {{.OCX}} lychee --config lychee.toml --root-dir "$PWD/.lychee-root" --include '/\.lychee-root/integrations/devcontainer' 'dist/**/*.html'
+          rc=$?
+          rm -rf .lychee-root
+          exit $rc
+
+  site:lighthouse:
+    desc: Lighthouse (mobile, 100 in all four categories, budgets) over every built page under the base path
+    deps: [site:build]
+    dir: site
+    cmds:
+      - "{{.OCX}} pnpm exec playwright-core install chromium"
+      # CI runners lack Chromium's system libraries; a developer machine keeps its own.
+      - cmd: "{{.OCX}} pnpm exec playwright-core install-deps chromium"
+        if: '[ -n "$CI" ]'
+      - "{{.OCX}} pnpm run lighthouse"
