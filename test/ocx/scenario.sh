@@ -15,6 +15,9 @@ state=/usr/local/share/ocx-feature
 marker='Written by the ocx Dev Container Feature'
 # The workspace folder: scenario projects live under it, where the default consentPaths grant consent.
 workspace=$here
+# The workspace is a bind mount of a host directory: files a root script leaves there cannot be
+# removed by the host user afterwards, so every project this script made goes away when it exits.
+trap 'rm -rf "$workspace"/*-"$$"-* "$workspace"/*-"$$"' EXIT
 # Marker file name of a project this script made, so reruns inside one container stay independent.
 proj_n=0
 

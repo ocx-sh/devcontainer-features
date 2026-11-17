@@ -13,10 +13,11 @@ aliases() {
     awk '$1 !~ /^#/ && NF { print $1 }' test/images.txt
 }
 
-@test "the IMAGE enum of test:image lists exactly the aliases of test/images.txt, in order" {
-    enum=$(sed -n 's/^ *enum: \[\(.*\)\]$/\1/p' taskfiles/images.taskfile.yml | tr -d ' ' | tr ',' '\n')
-    [ -n "$enum" ]
-    [ "$enum" = "$(aliases)" ]
+@test "the IMAGE enums of test:image and run list exactly the aliases of test/images.txt, in order" {
+    enums=$(awk '/name: IMAGE$/ { want = 1; next } want && /enum: \[/ { sub(/.*enum: \[/, ""); sub(/\].*/, ""); gsub(/ /, ""); print; want = 0 }' taskfiles/images.taskfile.yml)
+    [ "$(printf '%s\n' "$enums" | wc -l)" -eq 2 ]
+    want=$(aliases | paste -sd, -)
+    [ "$(printf '%s\n' "$enums" | sort -u)" = "$want" ]
 }
 
 @test "every alias is [a-z0-9-]+ and unique, every line has a reference and an optional known platform" {
@@ -60,4 +61,31 @@ aliases() {
     grep -q 'name="broken &lt;&amp;&gt;"' "$xml"
     grep -q 'why' "$xml"
     grep -q 'exit 1' "$xml"
+}
+
+@test "run-workspace.sh without arguments or with an unknown alias exits 2" {
+    run_tool test/images/run-workspace.sh
+    assert_failure 2
+    run_tool test/images/run-workspace.sh nope root
+    assert_failure 2
+    assert_output --partial "unknown image alias"
+}
+
+@test "run-scenarios.sh rejects an unknown scenario name with exit 2 and lists the known ones" {
+    run_tool test/images/run-scenarios.sh no-such-scenario
+    assert_failure 2
+    assert_output --partial "unknown scenario 'no-such-scenario'"
+    assert_output --partial "user-existing"
+    assert_output --partial "fail-unknown-version"
+}
+
+@test "every scenario in scenarios.json has a script, and every fail-* name has a message and an exit code" {
+    for n in $(jq -r 'keys_unsorted[]' test/ocx/scenarios.json); do
+        [ -x "test/ocx/$n.sh" ] || {
+            echo "no executable test/ocx/$n.sh"
+            return 1
+        }
+    done
+    run jq -e 'to_entries | all(.key | startswith("fail-")) and all(.value | .message and .exit and .image)' test/images/failures.json
+    assert_success
 }
