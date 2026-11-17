@@ -293,7 +293,8 @@ hostile_refused() {
     for f in "$OCXF_SRC_DIR/dist.json" "$SANDBOX/fixture.json"; do
         [ -f "$f" ] || jq -j -f "$REPO_ROOT/scripts/dist-canonical.jq" <(jq "$(newver 0.6.9)" "$OCXF_SRC_DIR/dist.json") >"$f"
         # the installer's own resolver, row by row, against jq
-        jq -r '.releases[] | [.version, .target, .url, .sha256] | @tsv' "$f" >"$SANDBOX/jq.tsv"
+        # .tar.xz rows are refused by resolve_release before any download, so only .tar.gz rows resolve
+        jq -r '.releases[] | select(.filename | endswith(".tar.gz")) | [.version, .target, .url, .sha256] | @tsv' "$f" >"$SANDBOX/jq.tsv"
         run sh -c '
             export __OCXF_TESTING_SOURCE_ONLY=1
             OCXF_SRC_DIR=$1; . "$1/install.sh"
