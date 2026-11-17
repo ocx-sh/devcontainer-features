@@ -3,8 +3,8 @@
 # Copyright 2026 The OCX Authors
 
 # verify.sh: prove the published feature is the one in this tree. The version must resolve with the
-# devcontainer CLI, and the dist.json.sha256 inside the published tarball must equal the tree's.
-# Repo tooling: needs curl, jq, tar, sha256sum, devcontainer.
+# devcontainer CLI, and the published layer, unpacked, must equal src/ocx file for file and byte for byte.
+# Repo tooling: needs curl, jq, tar, diff, sha256sum, devcontainer.
 # env: FEATURE_VERSION, OCX_VERSION, REPO (owner/repo), GH_TOKEN, ACTOR, GITHUB_STEP_SUMMARY (when set)
 # Exit: 0 ok, 1 not published or content differs, 3 network.
 set -eu
@@ -37,8 +37,17 @@ curl -fsSL --retry 3 --retry-all-errors -H "@$tmp/auth" -o "$tmp/layer.tar" "$ap
     die "cannot download the feature layer" 3
 
 want=$(cut -d' ' -f1 "$root/src/ocx/dist.json.sha256")
-got=$(tar -xOf "$tmp/layer.tar" ./dist.json.sha256 | cut -d' ' -f1)
+mkdir "$tmp/layer"
+tar -xf "$tmp/layer.tar" -C "$tmp/layer" || die "cannot unpack the feature layer"
+got=$(cut -d' ' -f1 "$tmp/layer/dist.json.sha256" 2>/dev/null) || got=
 [ "$got" = "$want" ] || die "published dist.json.sha256 '$got' differs from the tree's '$want'"
+# The whole file set and every byte must equal src/ocx. Measured with the pinned CLI (0.90.0): packaging
+# adds and rewrites nothing, so no file is exempt. A version that exists with other content (publish.sh
+# skips an existing version) fails here.
+if ! diff -r "$tmp/layer" "$root/src/ocx" >"$tmp/diff" 2>&1; then
+    head -n 10 "$tmp/diff" >&2
+    die "the published $ref:$v differs from src/ocx; a published version is immutable, so the feature version must be bumped and released again"
+fi
 
 echo "verified $ref:$v ($digest), manifest sha256 $want"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then

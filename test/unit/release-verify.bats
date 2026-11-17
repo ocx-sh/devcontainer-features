@@ -59,3 +59,33 @@ esac'
     run_tool "$VERIFY"
     assert_failure 3
 }
+
+# tree_and_layer <file> <tree content> <layer content>: a file in src/ocx and in the published layer.
+tree_and_layer() {
+    printf '%s' "$2" >"$R/src/ocx/$1"
+    printf '%s' "$3" >"$SANDBOX/layer/$1"
+    tar -C "$SANDBOX/layer" -cf "$SANDBOX/layer.tar" .
+}
+
+@test "a published layer with the same sidecar but different content fails" {
+    tree_and_layer install.sh 'echo safe' 'echo evil'
+    run_tool "$VERIFY"
+    assert_failure 1
+    assert_output --partial "install.sh"
+    assert_output --partial "must be bumped"
+}
+
+@test "a published layer with a file the tree lacks fails" {
+    printf 'x' >"$SANDBOX/layer/extra.sh"
+    tar -C "$SANDBOX/layer" -cf "$SANDBOX/layer.tar" .
+    run_tool "$VERIFY"
+    assert_failure 1
+    assert_output --partial "extra.sh"
+}
+
+@test "identical content passes" {
+    tree_and_layer install.sh 'echo same' 'echo same'
+    run_tool "$VERIFY"
+    assert_success
+    assert_output --partial "verified"
+}
