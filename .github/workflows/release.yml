@@ -42,10 +42,16 @@ jobs:
     outputs:
       run: ${{ steps.detect.outputs.run }}
       changed: ${{ steps.detect.outputs.changed }}
+      published: ${{ steps.detect.outputs.published }}
+      sha: ${{ steps.sha.outputs.sha }}
     steps:
+      # The default branch head, not the trigger-time github.sha: a queued run must not start from a stale base.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
       - id: detect
         env:
           PUBLISH_CURRENT: ${{ inputs.publish_current }}
@@ -71,6 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.detect.outputs.sha }}
           persist-credentials: false
       - uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
         with:
@@ -91,7 +98,7 @@ jobs:
           overwrite: true # a rerun uploads the same name again
 
   test:
-    needs: prepare
+    needs: [detect, prepare]
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -104,6 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.detect.outputs.sha }}
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -139,12 +147,16 @@ jobs:
     needs: [detect, prepare, test]
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # The orchestrator restricts this environment to deployments from the default branch. Naming it adds no
+    # reviewer gate, so a dry run and the hourly schedule run unattended exactly as before.
+    environment: release
     permissions:
       contents: write
       packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.detect.outputs.sha }}
           # The push authenticates with a header scoped to publish.sh, not with credentials left in .git.
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -157,7 +169,6 @@ jobs:
       - uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
         with:
           groups: default
-          otel-auth: ${{ secrets.OTEL_OTLP_AUTH }}
       - run: ocx exec -g default -- pnpm install --frozen-lockfile
       - name: Commit, tag, publish, verify
         env:
@@ -167,23 +178,27 @@ jobs:
           REPO: ${{ github.repository }}
           ACTOR: ${{ github.actor }}
           GH_TOKEN: ${{ github.token }}
+          EXPECT_SHA: ${{ needs.detect.outputs.sha }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: ocx exec -g default -- pnpm exec sh scripts/release/publish.sh
 
   report:
     needs: [detect, prepare, test, publish]
-    if: always() && needs.detect.result == 'success' && !inputs.dry_run
+    if: always() && !inputs.dry_run
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
       issues: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.detect.outputs.sha || github.event.repository.default_branch }}
           persist-credentials: false
       - name: Open, update or close the release-blocked issue
         env:
+          EVENT_NAME: ${{ github.event_name }}
           NEEDS_JSON: ${{ toJSON(needs) }}
           OCX_VERSION: ${{ needs.prepare.outputs.ocx_version }}
           REPO: ${{ github.repository }}

@@ -103,3 +103,24 @@ setup() {
     run cat "$STUB_LOG"
     assert_output ""
 }
+
+# heads <sha>: git stub whose default-branch head is <sha>; the tag lookup finds nothing.
+heads() {
+    stub git "case \"\$*\" in *\"diff --cached --quiet\"*) exit 1 ;; *\"ls-remote origin refs/heads/main\"*) printf '%s\\trefs/heads/main\\n' $1 ;; *ls-remote*) exit 2 ;; esac"
+}
+
+@test "a default branch that moved since the run started stops before anything is committed" {
+    heads bbbb
+    EXPECT_SHA=aaaa run_tool "$PUB"
+    assert_failure 1
+    assert_output --partial "moved"
+    run grep -e 'commit' -e 'push' -e 'features publish' "$STUB_LOG"
+    assert_failure
+}
+
+@test "a default branch still at the run's sha publishes" {
+    heads aaaa
+    EXPECT_SHA=aaaa run_tool "$PUB"
+    assert_success
+    assert_stub_called "devcontainer features publish --registry ghcr.io --namespace ocx-sh/devcontainer-features ./src"
+}

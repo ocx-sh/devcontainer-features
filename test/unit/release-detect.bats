@@ -148,6 +148,7 @@ esac'
     assert_success
     run cat "$GITHUB_OUTPUT"
     assert_line "run=false"
+    assert_line "published=true"
 }
 
 @test "an unexpected registry answer fails the run instead of guessing" {

