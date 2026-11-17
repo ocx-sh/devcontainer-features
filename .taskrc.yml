@@ -1,0 +1,4 @@
+# Task 3.54: with `interactive`, a missing required variable opens a selection prompt in a terminal
+# and fails naming the allowed values everywhere else (CI, pipes, </dev/null). Tasks without
+# `requires` are unaffected.
+interactive: true

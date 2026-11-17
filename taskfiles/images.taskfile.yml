@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+#
+# The base-image matrix, included flat from the root taskfile.yml. The image list is test/images.txt;
+# each image is the feature's test/ocx/test.sh run by `devcontainer features test` (test/images/run-image.sh).
+# Run as `ocx exec -g all -- task <name>`; CI reaches these through `task ci:test` and `task ci:deep`.
+version: "3"
+
+vars:
+  # The devcontainer CLI is a pinned pnpm devDependency; node and pnpm come from the default ocx group.
+  IMAGES_OCX: ocx exec -g default --
+
+tasks:
+  test:image:
+    desc: "devcontainer features test on one base image. IMAGE=<alias> from test/images.txt (a terminal without IMAGE shows a selection)"
+    requires:
+      vars:
+        # Keep in step with test/images.txt: test/unit/images.bats fails when the two differ.
+        - name: IMAGE
+          enum: [debian, ubuntu, alpine, fedora, rocky, alma, ubi-minimal, amazonlinux, opensuse, arch, wolfi, busybox, devcontainers-ubuntu, devcontainers-debian, devcontainers-alpine]
+    cmds:
+      - "{{.IMAGES_OCX}} pnpm install --frozen-lockfile"
+      - "{{.IMAGES_OCX}} sh test/images/run-image.sh {{.IMAGE}}"
+
+  test:images:
+    desc: "Every image of test/images.txt, JOBS at a time (default 3); each reports its own result, then one table. Re-run one with test:image"
+    vars:
+      JOBS: '{{.JOBS | default "3"}}'
+    cmds:
+      - "{{.IMAGES_OCX}} pnpm install --frozen-lockfile"
+      - "JOBS={{.JOBS}} {{.IMAGES_OCX}} sh test/images/run-all.sh"

@@ -12,6 +12,9 @@ includes:
   feature:
     taskfile: ./taskfiles/feature.taskfile.yml
     flatten: true
+  images:
+    taskfile: ./taskfiles/images.taskfile.yml
+    flatten: true
   site:
     taskfile: ./taskfiles/site.taskfile.yml
     flatten: true
@@ -34,6 +37,10 @@ tasks:
     desc: Tests (JUnit XML goes to target/reports/junit/)
     cmds:
       - task: test:unit
+      - task: test:image
+        vars: {IMAGE: debian}
+      - task: test:image
+        vars: {IMAGE: alpine}
 
   ci:build:
     desc: Build
@@ -52,3 +59,4 @@ tasks:
     cmds:
       - mkdir -p target/reports/junit
       - task: test:unit
+      - task: test:images
