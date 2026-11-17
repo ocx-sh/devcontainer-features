@@ -26,7 +26,7 @@ For a failure after the container starts, see [Fix a missing tool or failed rest
 
 <!-- doc: ts-download-failed -->
 
-```text
+```console
 ocx-feature: download failed (attempt 1/3), retrying in 1s
 ocx-feature: download failed (attempt 2/3), retrying in 2s
 ocx-feature: error: failed to download https://github.com/ocx-sh/no-such-mirror/v0.6.8/ocx-x86_64-unknown-linux-musl.tar.gz
@@ -50,7 +50,7 @@ To fix it:
 
 <!-- doc: ts-checksum-mismatch -->
 
-```text
+```console
 ocx-feature: error: checksum mismatch for ocx-x86_64-unknown-linux-musl.tar.gz
   expected: 96ddbd85be99542fcc3f73023103b8c0fcabe8d041a4f7e8abac697eba57d40f
   got:      <sha256 of the downloaded file>
@@ -73,7 +73,7 @@ The feature never skips this check. A mirror that serves modified bytes is refus
 
 <!-- doc: ts-unsupported-platform -->
 
-```text
+```console
 ocx-feature: error: libc: gnu needs glibc 2.28 or newer, which this image does not have; use libc: musl or auto
 ```
 
@@ -86,18 +86,22 @@ It covers an installed binary that does not run as well.
 To fix it, remove the `libc` option or set it to `musl` or `auto`.
 The default `musl` build runs on every Linux image.
 
-```jsonc-norun
+<!-- doc-norun: the snippet is a fragment of a devcontainer.json, not a runnable file -->
+
+```jsonc
 // A default install, which works on Alpine as well.
 "features": {
   "ghcr.io/ocx-sh/devcontainer-features/ocx:1": {}
 }
 ```
 
+<!-- /doc-norun -->
+
 ## Error: missing a CA bundle and no package manager {#missing-prerequisite}
 
 <!-- doc: ts-missing-prerequisite -->
 
-```text
+```console
 ocx-feature: installing missing prerequisites: ca-bundle
 ocx-feature: error: missing: ca-bundle, and no supported package manager was found; install them in the base image
 ```
@@ -119,7 +123,7 @@ To fix it, choose one of these:
 
 <!-- doc: ts-version-not-found -->
 
-```text
+```console
 ocx-feature: error: no ocx 9.9.9 build for x86_64-unknown-linux-musl in the release manifest (newest available: 0.6.8); set version: latest or distUrl to a manifest that has it
 ```
 
@@ -138,7 +142,7 @@ To fix it:
 
 <!-- doc: ts-ca-bundle-missing -->
 
-```text
+```console
 ocx-feature: error: option caBundle is not a readable file: /usr/local/share/ca-certificates/corp.pem
 ```
 
@@ -155,7 +159,7 @@ To fix it, copy the PEM file into the image with a `COPY` line in the Dockerfile
 
 <!-- doc: ts-invalid-option -->
 
-```text
+```console
 ocx-feature: error: option libc must be musl, gnu or auto (got: glibc)
 ```
 
