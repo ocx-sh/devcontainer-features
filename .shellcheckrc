@@ -1,0 +1,5 @@
+# Severity is a command-line flag, not an rc key; the lint task passes --severity=style.
+external-sources=true
+source-path=SCRIPTDIR
+enable=check-set-e-suppressed
+enable=deprecate-which
