@@ -9,6 +9,9 @@ includes:
   baseline:
     taskfile: ./taskfiles/baseline.taskfile.yml
     flatten: true
+  feature:
+    taskfile: ./taskfiles/feature.taskfile.yml
+    flatten: true
   site:
     taskfile: ./taskfiles/site.taskfile.yml
     flatten: true
@@ -24,13 +27,12 @@ tasks:
   ci:lint:
     desc: Lint and format checks
     cmds:
-      - echo "no lint yet - TODO wire the repo linters here"
+      - task: lint
 
   ci:test:
     desc: Tests (JUnit XML goes to target/reports/junit/)
     cmds:
-      - mkdir -p target/reports/junit
-      - echo "no tests yet - TODO write JUnit XML to target/reports/junit/"
+      - task: test:unit
 
   ci:build:
     desc: Build

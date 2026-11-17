@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+#
+# The feature's lint and unit tests, included flat from the root taskfile.yml.
+# Run as `ocx exec -g all -- task <name>`; CI reaches these through `task ci:lint` and `task ci:test`.
+version: "3"
+
+vars:
+  IMAGE: ocx-feature-unit
+  # CI's lint job pulls default+lint and its test job default+test (the suite's tools live in the image).
+  LINT_OCX: ocx exec -g default -g lint --
+  TEST_OCX: ocx exec -g default --
+
+tasks:
+  lint:
+    desc: ShellCheck (every finding fails), shfmt, and a check that every shellcheck disable carries a reason
+    cmds:
+      - cmd: "{{.LINT_OCX}} sh scripts/lint.sh"
+
+  test:image:
+    desc: Build the interpreter image the unit suite runs in (cached by Docker)
+    run: once
+    cmds:
+      - docker build -q -t {{.IMAGE}} -f test/unit/Dockerfile test/unit
+
+  test:unit:
+    desc: "Unit suite on dash, busybox sh and bash --posix, then the coverage gate. Filter: FILE=test/unit/lib.bats, LEGS='dash' (newline list)"
+    deps: [test:image]
+    vars:
+      FILE: '{{.FILE | default "test/unit"}}'
+      LEGS: '{{.LEGS | default ""}}'
+    cmds:
+      - "{{.TEST_OCX}} pnpm install --frozen-lockfile"
+      - mkdir -p target/reports/junit
+      - >-
+        docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp
+        -e OCXF_FILE={{.FILE}} -e "OCXF_LEGS={{.LEGS}}"
+        -v "$PWD:/work:ro" -v "$PWD/target/reports:/work/target/reports"
+        -w /work {{.IMAGE}} sh test/unit/run-legs.sh
