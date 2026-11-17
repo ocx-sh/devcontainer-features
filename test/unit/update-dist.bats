@@ -259,7 +259,7 @@ case "$o" in *.sha256) cp "$UPSTREAM/dist.json.sha256" "$o";; *) cp "$UPSTREAM/d
 hostile_refused() {
     hostile "$1"
     before=$(sums)
-    run_tool "$UPD" ${3:-} --from "$UP"
+    run_tool "$UPD" ${3:+"$3"} --from "$UP"
     assert_failure 5
     assert_output --partial "$2"
     [ "$(sums)" = "$before" ]
