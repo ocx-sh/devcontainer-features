@@ -14,13 +14,13 @@ The build log also ends with `did not complete successfully: exit code: N`. The 
 
 | Exit code | Meaning |
 |---|---|
-| 2 | A bad option, a missing tool, or a version that is not in the manifest |
-| 3 | A download failed |
-| 4 | A checksum did not match |
+| 2 | A bad option, a missing tool, or a version that is not in the manifest or is too old |
+| 3 | A download failed, or a redirect left HTTPS |
+| 4 | A checksum did not match, or the manifest is not in the expected plain form |
 | 5 | The archive could not be extracted |
 | 7 | The platform is not supported |
 
-For a failure after the container starts, see [Fix a missing tool or failed restore](./container-errors.md).
+After the container starts, see [Fix a lock or permission error](./container-errors.md), [Fix a restore warning](./restore-warnings.md) or [Fix a tool missing from the terminal](./shell-activation-errors.md).
 
 ## Error: failed to download the archive {#download-failed}
 
@@ -38,6 +38,11 @@ The build exits with code 3.
 This issue occurs when the build cannot fetch the release archive. The network may block the host, or the URL may answer with an error status.
 The download makes three attempts and sends no credentials, so a mirror that asks for a login fails the same way.
 A failed manifest download prints `failed to fetch the release manifest from <url>` instead, followed by the same exit code.
+A connection that does not open within 30 seconds, or a transfer that stalls, ends an attempt without waiting for the network.
+
+A server that redirects an HTTPS URL to a plain `http://` URL stops the build at once with exit code 3 and the message `refusing a redirect to a non-https URL`.
+Point `mirrorUrl` or `distUrl` at the final HTTPS address to fix that.
+
 A certificate the image does not trust adds a `curl` line to each attempt:
 
 <!-- doc: ts-download-untrusted-ca -->
@@ -77,6 +82,8 @@ To fix it:
 3. If a proxy rewrites downloads, exempt the mirror or the GitHub release host from it.
 
 The feature never skips this check. A mirror that serves modified bytes is refused by design.
+A `distUrl` manifest that contains a backslash or repeats a key in one row also exits with code 4 and the message `release manifest is not in the expected plain form`.
+Serve the manifest unchanged from the official one to fix that.
 
 ## Error: libc gnu needs glibc 2.28 or newer {#unsupported-platform}
 

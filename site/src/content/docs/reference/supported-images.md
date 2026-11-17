@@ -1,6 +1,8 @@
 ---
 title: Supported base images
 description: The base images the ocx Dev Container Feature is tested on, the prerequisites it installs on each family, and the two known limits.
+sidebar:
+  order: 4
 ---
 <!-- doc_type: reference -->
 
@@ -48,7 +50,7 @@ The build log names what it installs in a line that starts with `ocx-feature: in
 | Fedora, Amazon Linux | `dnf` | the same names |
 | Rocky Linux minimal, Red Hat UBI minimal | `microdnf` | the same names |
 | openSUSE Leap | `zypper` | the same names |
-| Arch Linux | `pacman` | the same names |
+| Arch Linux | `pacman` | the same names, installed with `pacman -Syu --needed` |
 | BusyBox | none | nothing, see [bare BusyBox](#busybox) |
 
 On `debian:stable-slim` the build adds `curl` and the CA certificates.

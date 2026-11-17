@@ -1,6 +1,8 @@
 ---
 title: Files, environment and exit codes
 description: The files the ocx Dev Container Feature writes, the environment a new shell sees, the lifecycle commands and the exit codes of the install.
+sidebar:
+  order: 2
 ---
 <!-- doc_type: reference -->
 
@@ -59,18 +61,44 @@ The options map to this file as follows.
 ### The shell profile {#profile}
 
 With default options `/etc/profile.d/ocx.sh` holds this text.
-The `case` makes it a no-op in non-interactive shells.
+The outer `case` makes it a no-op in non-interactive shells.
+The code finds the project directory from `OCX_PROJECT` or from the nearest `ocx.toml` above the working directory.
+
+The inner `case` runs `ocx env` only when that directory matches a `consentPaths` entry, here `/workspaces` and everything below it.
+A project outside the list runs no `ocx` command and leaves `PATH` unchanged.
+The `consentPaths` option controls the patterns in that `case`, and `pullGroups` adds `--group=<groups>` to the command.
 
 ```sh
 # Written by the ocx Dev Container Feature (id: ocx). Edits are overwritten on rebuild.
 case $- in
 *i*)
     if [ -x '/usr/local/bin/ocx' ]; then
-        if [ -n "${BASH_VERSION-}" ]; then __ocx_sh=bash
-        elif [ -n "${ZSH_VERSION-}" ]; then __ocx_sh=zsh
-        else __ocx_sh=sh; fi
-        eval "$('/usr/local/bin/ocx' --offline env --shell="$__ocx_sh" 2>/dev/null)" || :
-        unset __ocx_sh
+        __ocxf_d=${OCX_PROJECT-}
+        if [ -n "$__ocxf_d" ]; then
+            [ -d "$__ocxf_d" ] || case $__ocxf_d in
+            */*) __ocxf_d=${__ocxf_d%/*}; [ -n "$__ocxf_d" ] || __ocxf_d=/ ;;
+            *) __ocxf_d=. ;;
+            esac
+        else
+            __ocxf_d=$(pwd -P 2>/dev/null && printf x) || __ocxf_d=x
+            __ocxf_d=${__ocxf_d%x}; __ocxf_d=${__ocxf_d%?}
+            while [ -n "$__ocxf_d" ] && [ ! -f "$__ocxf_d/ocx.toml" ]; do
+                if [ "$__ocxf_d" = / ]; then __ocxf_d=; else __ocxf_d=${__ocxf_d%/*}; [ -n "$__ocxf_d" ] || __ocxf_d=/; fi
+            done
+        fi
+        if [ -n "$__ocxf_d" ]; then
+            __ocxf_d=$(cd -- "$__ocxf_d" 2>/dev/null && pwd -P && printf x) || __ocxf_d=x
+            __ocxf_d=${__ocxf_d%x}; __ocxf_d=${__ocxf_d%?}
+        fi
+        case $__ocxf_d in
+        '/workspaces' | '/workspaces'/*)
+            if [ -n "${BASH_VERSION-}" ]; then __ocxf_sh=bash
+            elif [ -n "${ZSH_VERSION-}" ]; then __ocxf_sh=zsh
+            else __ocxf_sh=sh; fi
+            eval "$('/usr/local/bin/ocx' --offline env --shell="$__ocxf_sh" 2>/dev/null)" || :
+            ;;
+        esac
+        unset __ocxf_d __ocxf_sh
     fi
     ;;
 esac
@@ -97,12 +125,9 @@ The resulting `PATH` starts with the project link directory.
 /workspaces/ws-debian/.ocx/toolchain/links/default/shfmt/content:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ```
 
-Outside a project the same command fails with exit code 64 and the profile ignores the failure, so `PATH` stays unchanged.
+Outside a project, and in a project outside `consentPaths`, `PATH` stays unchanged.
 Non-interactive shells, including `sh -lc`, run no activation code.
-
-```console
-error: no ocx.toml found in /tmp or any parent; run `ocx init` to create one
-```
+The shell reads the project once, when it starts, so a later `cd` changes nothing.
 
 ## Lifecycle commands {#lifecycle}
 
@@ -112,7 +137,7 @@ Both run as the remote user with the workspace folder as the working directory.
 | Command | Runs | Condition |
 |---|---|---|
 | `onCreateCommand` | `/usr/local/share/ocx-feature/hook.sh on-create` | Runs `ocx config setup --managed-config <reference>` when `managedConfig` is set. |
-| `updateContentCommand` | `/usr/local/share/ocx-feature/hook.sh update-content` | Runs `ocx pull`, with `-g <pullGroups>` when set, when `pull` is `true` and an `ocx.toml` exists in or above the workspace. |
+| `updateContentCommand` | `/usr/local/share/ocx-feature/hook.sh update-content` | Runs `ocx pull`, with `--group=<pullGroups>` when set, when `pull` is `true` and an `ocx.toml` exists in or above the workspace. |
 
 The hooks never fail the container.
 A failing ocx command produces one warning and the hook exits 0.
@@ -128,10 +153,11 @@ ocx-feature: warning: ocx pull failed with exit code 78.
 |---|---|---|
 | 78, 65 | No `ocx.lock`, or a stale one. | Run `ocx lock` and commit `ocx.lock`. |
 | 75, 69, 79 | Network failure or package not found. | Check the network, mirror and proxy settings. |
-| 74 | File ownership problem. | Check ownership of `ocx.toml`, `ocx.lock` and `.ocx`. |
+| 74 | File ownership problem, or an `ocxHome` directory the user cannot write. | With `ocxHome` set, the warning names that directory, which must exist and be writable. Otherwise check ownership of `ocx.toml`, `ocx.lock` and `.ocx`. |
 | 64 | An unknown group in `pullGroups`, or no managed config source. | Correct the option. |
 
-When the hook runs as root and the project directory belongs to another user, it pulls nothing and warns instead.
+When the hook runs as root and the project directory, `ocx.lock`, `.ocx` or the `OCX_PROJECT` path belongs to another user, it pulls nothing and warns instead.
+This applies when `remoteUser` is `root` on a workspace owned by a regular user.
 
 ```console
 ocx-feature: warning: not pulling: /workspaces/ws-debian is owned by another user and this hook runs as root, which would take over ocx.lock and the toolchain links; run ocx pull as that user
@@ -146,9 +172,9 @@ A non-zero code fails the image build.
 |---|---|
 | 0 | Success. |
 | 1 | Generic failure. |
-| 2 | Usage error, invalid option value, or a missing tool the build could not install. |
-| 3 | Network failure. |
-| 4 | Checksum mismatch. |
+| 2 | Usage error, invalid option value, a release older than the first `.tar.gz` build, or a missing tool the build could not install. |
+| 3 | Network failure, or a redirect to a URL that is not `https://`. |
+| 4 | Checksum mismatch, or a release manifest that is not in the expected plain form. |
 | 5 | Extraction failure. |
 | 7 | Unsupported platform, or the installed binary does not run. |
 

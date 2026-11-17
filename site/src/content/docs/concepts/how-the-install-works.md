@@ -1,11 +1,14 @@
 ---
 title: How the feature installs ocx
-description: What the ocx Dev Container Feature does at image build and at container creation, which bytes it trusts, and what it never does.
+description: What the ocx Dev Container Feature does at image build and at container creation, how it verifies what it downloads, and what it never does.
+sidebar:
+  order: 1
 ---
 <!-- doc_type: explanation -->
 
 This page explains what the ocx Dev Container Feature does to an image and to a container.
-It lets a reviewer list the files the feature writes, the bytes it trusts and the things it never does.
+It lets a reviewer list the files the feature writes, the checks it runs and the things it never does.
+[What the feature trusts](trust-model.md) covers the trust decisions behind them.
 The excerpts come from real runs against `debian:stable-slim` and `alpine:3` with default options.
 Every option named here is described on the [options page](../reference/options.md), and every path on the [files page](../reference/environment-and-files.md).
 
@@ -41,6 +44,7 @@ It chooses the build target from the CPU architecture and the `libc` option.
 It checks the tools it needs: a downloader (`curl` or `wget`), `tar`, `gzip`, a SHA-256 tool, `mktemp` and a CA certificate bundle.
 
 When something is missing, the script installs it through the image's package manager (`apt-get`, `apk`, `dnf`, `microdnf`, `yum`, `zypper` or `pacman`) and checks again.
+On Arch the command is `pacman -Syu --needed`, because a partial upgrade can break the image.
 On Debian the log shows one line before the package manager output.
 
 ```console
@@ -81,11 +85,18 @@ An exact version is looked up in the snapshot and fails when the snapshot has no
 
 ## How the archive is verified {#verification}
 
-Two digests protect the install, and neither has an off switch.
-The script compares the SHA-256 of the snapshot with the recorded one before it uses the snapshot.
-A mismatch stops the build with exit code 4, so a tampered feature package cannot install anything.
+Two checks protect the install, and neither has an off switch.
+The script compares the SHA-256 of the bundled snapshot with the recorded one before it uses the snapshot.
+A mismatch stops the build with exit code 4.
+Both files travel in the same feature package, so this check detects corruption and not a swapped package.
+
 The release row names the SHA-256 of the archive, and the script compares it with the downloaded file before it extracts anything.
 A mismatch stops the build with exit code 4 and prints both values.
+
+A manifest that the script reads as plain text must also look plain.
+A backslash anywhere in the manifest, or a repeated key in one row, stops the build with exit code 4.
+That check runs before the script trusts any row.
+A release that ships as anything but a `.tar.gz` archive stops the build with exit code 2 before the download.
 
 Extraction runs in two passes.
 The first pass rejects absolute paths and `..` members.
@@ -93,9 +104,17 @@ The second pass rejects links that point outside the target directory.
 Only then does `tar` extract, without the archive's owner or permissions.
 The binary is staged next to its destination, run once to confirm that it reports the expected version, and moved into place only after that.
 
-The download itself accepts only `https://` URLs and passes `--proto '=https'` and a TLS 1.2 floor to `curl` when `curl` supports them.
-It retries a failed download twice with a growing delay before it exits with code 3.
+The download accepts only `https://` URLs and passes `--proto '=https'` and a TLS 1.2 floor to `curl` when `curl` supports them.
+It refuses a redirect to a URL that is not `https://` and exits with code 3.
+The script retries a failed attempt twice with a growing delay before it exits with code 3.
+
+Timeouts bound each attempt.
+With `curl`, a connection that takes longer than 30 seconds to open ends the attempt.
+So does a transfer that stays below 1 KiB per second for 60 seconds.
+With `wget`, a 30-second timeout bounds each wait.
+
 A `mirrorUrl` changes where the archive comes from and nothing else, because the checksum still comes from the manifest.
+[What the feature trusts](trust-model.md#install) says which sources a given option set depends on.
 
 ## What the feature never does {#never}
 
@@ -155,4 +174,9 @@ A Codespaces prebuild runs both commands, so a prebuild contains the tools.
 Without an `ocx.toml` in or above the workspace the hook prints nothing.
 
 A failure in either hook becomes one warning with the ocx exit code and a fix, and the container still starts.
-New shells then read `/etc/profile.d/ocx.sh` and put the project toolchain on `PATH` once, at shell start.
+A hook that runs as root pulls nothing when the project, `ocx.lock`, `.ocx` or the `OCX_PROJECT` path belongs to another user.
+
+New interactive shells read `/etc/profile.d/ocx.sh`.
+When the project lies under a [`consentPaths`](../reference/options.md#opt-consentPaths) entry, the shell puts the project toolchain on `PATH` once, when it starts.
+It does not refresh on `cd`, and a project outside those paths activates nothing.
+[What the feature trusts](trust-model.md#activation) explains why the activation has that gate.
