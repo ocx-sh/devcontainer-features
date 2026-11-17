@@ -51,3 +51,15 @@ tasks:
     desc: Compare installer-parity.json with the live official installer
     cmds:
       - cmd: "sh scripts/check-installer-parity.sh"
+
+  feature:readme:
+    desc: Regenerate src/ocx/README.md from devcontainer-feature.json and NOTES.md (edit NOTES.md, never the README)
+    cmds:
+      - cmd: "{{.TEST_OCX}} pnpm install --frozen-lockfile"
+      - cmd: "{{.TEST_OCX}} pnpm exec sh scripts/readme.sh"
+
+  feature:readme:check:
+    desc: Fail when the committed src/ocx/README.md is stale
+    cmds:
+      - cmd: "{{.TEST_OCX}} pnpm install --frozen-lockfile"
+      - cmd: "{{.TEST_OCX}} pnpm exec sh scripts/readme.sh --check"

@@ -28,6 +28,7 @@ tasks:
     desc: Lint and format checks
     cmds:
       - task: lint
+      - task: feature:readme:check
 
   ci:test:
     desc: Tests (JUnit XML goes to target/reports/junit/)
