@@ -429,8 +429,7 @@ download_once() {
     if grep -q 'certificate validation not implemented' "$ocxf_dest.err"; then
         OCXF_TLS_UNVALIDATED=1
     fi
-    ocxf_loc=$(sed -n 's/^[[:space:]]*[Ll][Oo][Cc][Aa][Tt][Ii][Oo][Nn]:[[:space:]]*//p' "$ocxf_dest.err" | tr -d '\r' |
-        grep -i '^[a-z][a-z0-9+.-]*:' | grep -v -i "^https://" | head -1)
+    ocxf_loc=$(sed -n 's/^[[:space:]]*[Ll][Oo][Cc][Aa][Tt][Ii][Oo][Nn]:[[:space:]]*//p' "$ocxf_dest.err" | tr -d '\r' | grep -i '^[a-z][a-z0-9+.-]*:' | grep -v -i '^https://' | head -1)
     rm -f "$ocxf_dest.err"
     [ -z "$ocxf_loc" ] || err "refusing a redirect to a non-https URL: $ocxf_loc (from $ocxf_url)" 3
     return "$ocxf_st"
@@ -553,14 +552,7 @@ load_vendored_manifest() {
 assert_plain_manifest() {
     ocxf_msg="release manifest is not in the expected plain form"
     ! grep -q '[\]' "$OCXF_MANIFEST" || err "$ocxf_msg" 4
-    ocxf_dup=$(manifest_leaves | awk '
-        {
-            n = split("version channel tag target filename sha256 url", keys, " ")
-            for (i = 1; i <= n; i++) {
-                c = gsub("\"" keys[i] "\"[ \t]*:", "&")
-                if (c > 1) { print keys[i]; exit }
-            }
-        }')
+    ocxf_dup=$(manifest_leaves | awk '{ n = split("version channel tag target filename sha256 url", k, " "); for (i = 1; i <= n; i++) if (gsub("\"" k[i] "\"[ \t]*:", "&") > 1) { print k[i]; exit } }')
     [ -z "$ocxf_dup" ] || err "$ocxf_msg" 4
 }
 
@@ -619,10 +611,7 @@ resolve_release() {
         *.tar.gz) ;;
         *)
             # safe_extract only gunzips: stop before the download, not after it
-            ocxf_oldest=$(manifest_leaves | grep "\"target\"[[:space:]]*:[[:space:]]*\"$OCXF_TARGET\"" |
-                grep '"filename"[[:space:]]*:[[:space:]]*"[^"]*\.tar\.gz"' |
-                sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
-                sort -t. -k1,1n -k2,2n -k3,3n | head -1)
+            ocxf_oldest=$(manifest_leaves | grep "\"target\"[[:space:]]*:[[:space:]]*\"$OCXF_TARGET\"" | grep '"filename"[[:space:]]*:[[:space:]]*"[^"]*\.tar\.gz"' | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | sort -t. -k1,1n -k2,2n -k3,3n | head -1)
             [ -n "$ocxf_oldest" ] || err "ocx $ocxf_want ships as $OCXF_ROW_FILE; this feature installs .tar.gz releases only and the manifest has none for $OCXF_TARGET" 2
             err "ocx $ocxf_want ships as $OCXF_ROW_FILE; this feature installs .tar.gz releases only. The oldest $OCXF_TARGET .tar.gz build is $ocxf_oldest: set version to $ocxf_oldest or newer" 2
             ;;
