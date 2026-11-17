@@ -21,7 +21,7 @@ Installs the ocx package manager and restores the project toolchain from ocx.tom
 | mirrorUrl | HTTPS base URL to download release archives from, for networks that cannot reach GitHub. Empty downloads from the official release location. | string | - |
 | caBundle | Path inside the image to a PEM CA bundle. It is used for downloads at build time and by ocx at run time. Empty uses the system certificates. | string | - |
 | managedConfig | OCI reference of an organisation-managed ocx configuration. Empty installs no managed configuration. | string | - |
-| ocxHome | Sets OCX_HOME for all users. Empty keeps the default ~/.ocx for each user. | string | - |
+| ocxHome | Sets OCX_HOME for all users. The directory must exist and be writable by the user who opens the container; the feature does not create it. Empty keeps ~/.ocx for each user. | string | - |
 | installDir | Directory that receives the ocx binary. It must be on PATH. | string | /usr/local/bin |
 | noUpdateCheck | Turn off the ocx update check, so the container makes no network call just to look for a new ocx. | boolean | true |
 | consentPaths | Colon-separated absolute paths. A project there activates in new shells and ocx grants consent without a prompt. A trailing /* covers the path and below. Empty activates nothing. | string | /workspaces/* |

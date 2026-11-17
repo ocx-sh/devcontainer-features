@@ -42,7 +42,7 @@
     "ocxHome": {
       "type": "string",
       "default": "",
-      "description": "Sets OCX_HOME for all users. Empty keeps the default ~/.ocx for each user."
+      "description": "Sets OCX_HOME for all users. The directory must exist and be writable by the user who opens the container; the feature does not create it. Empty keeps ~/.ocx for each user."
     },
     "installDir": {
       "type": "string",
