@@ -1,0 +1,1 @@
+{"v":1,"ts":"2026-11-17T01:37:08Z","kind":"pitfall","scope":"project","artifact":"project","what":"run_sh routes through coverage.sh on the bash leg, which breaks scripts outside src/ocx; added run_tool to helpers.bash","tell":"bash leg only: BASH_SOURCE: unbound variable at script line 1 while dash and busybox pass"}
