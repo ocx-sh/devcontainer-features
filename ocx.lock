@@ -1,9 +1,9 @@
 [metadata]
 lock_version = 4
 declaration_hash_version = 1
-declaration_hash = "sha256:9cc3d683f73516b7b04b81b01acb274ddd81a0b2cd5d2e1833c2dcd2c901f0e8"
+declaration_hash = "sha256:c4b0cc67da3ccdac3332d0ec9f83fd988410a19d637556049efd336e2542ddb8"
 generated_by = "ocx 0.6.8"
-generated_at = "2026-11-16T23:58:14Z"
+generated_at = "2026-11-17T00:14:57Z"
 
 [[tool]]
 name = "node"
@@ -156,6 +156,19 @@ declared = "ocx.sh/shellcheck/shellcheck:0.11.0"
 "linux/amd64" = "sha256:3981b442fff3f6bf9ae93e4c293e53322ffc9135e0b654620bc800464bdaf379"
 "linux/arm64" = "sha256:57f540d6f5a6f094f7c4e441e2294cb712abb2991d47736f91a56dde2c8025dd"
 "windows/amd64" = "sha256:ed1c498bddcc23a95ff99af7d17fa60f34e9d505d1557a1ba0c49e20d6d1d26f"
+
+[[tool]]
+name = "shfmt"
+group = "lint"
+repository = "ocx.sh/shfmt/shfmt"
+declared = "ocx.sh/shfmt/shfmt:3.13.1"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:d5c458c73b7f3b9171f921bc0f5232171312b09dd7730bc5fc26aa429bcf89c9"
+"darwin/arm64" = "sha256:5d1573ae94207b4ca01174dc4b6f4be0eb964b8da7fa1b2de883e5abd56ed249"
+"linux/amd64" = "sha256:3af504ea2ef5fc6aa0b911cf19768a1287fd7bd3bc9d975216e1cee7395e09c9"
+"linux/arm64" = "sha256:1682caf354968f932e2b5e3aa4e4463a9177fce51d540990756f7426d208cfee"
+"windows/amd64" = "sha256:deb3d51f2c27d681c471bd3da5c9745e47480f15ab76a95ee25e43c8db62a69d"
 
 [[tool]]
 name = "uv"
