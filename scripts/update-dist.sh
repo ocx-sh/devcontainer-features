@@ -108,40 +108,47 @@ if ! cmp -s "$new" "$tmp/canon"; then
 fi
 new_version=$(jq -r '.latest.version' "$new")
 
-if [ "$force" -eq 0 ]; then
-    # Every violation is one line; jq prints them all, then the count decides.
-    # shellcheck disable=SC2016 # jq program, not shell
-    jq -r --slurpfile old "$old" --arg prefix "$URL_PREFIX" --arg linux "$LINUX_TARGETS" '
-        def ver: split(".") | map(tonumber);
-        def key: "\(.version) \(.target)";
-        def seg: test("^[A-Za-z0-9._+-]+$") and . != "." and . != "..";
-        def okurl: type == "string" and startswith($prefix) and (.[($prefix | length):] | split("/") | length == 2 and all(.[]; seg));
-        . as $n | $old[0] as $o |
-        ( if .schema != 1 then "schema is \(.schema), expected 1" else empty end ),
-        ( if (.latest.channel // "") != "stable" then "latest is on channel \(.latest.channel // "missing"), not stable" else empty end ),
-        ( if (.latest.version // "" | test("^[0-9]+\\.[0-9]+\\.[0-9]+$") | not) then "latest.version \(.latest.version) is not x.y.z"
-          elif ($o.latest.version | ver) > (.latest.version | ver) then "downgrade: newest stable \(.latest.version) is lower than vendored \($o.latest.version)" else empty end ),
-        ( .releases | group_by(key)[] | select(length > 1) | "duplicate row \(.[0] | key)" ),
-        ( .releases[] | select(.sha256 | (type == "string" and test("^[0-9a-f]{64}$")) | not) | "\(key): sha256 is not 64 lowercase hex" ),
-        ( .releases[] | select(.url | okurl | not) | "\(key): url \(.url) is not a release asset under \($prefix)" ),
-        ( .releases[] | select(.tag | (type == "string" and seg) | not) | "\(key): tag \(.tag) is not a single path segment" ),
-        ( .releases[] | select(.filename | (type == "string" and seg and test("\\.(zip|tar\\.gz|tar\\.xz)$")) | not) | "\(key): filename \(.filename) is not a single segment with a known archive extension" ),
+# Every violation is one line; jq prints them all, then the count decides. --force sets $force and only
+# silences the policy block at the end; the integrity block always runs.
+# \A and \z, not ^ and $: jq's ^ and $ also match before a trailing newline, which the installer rejects.
+# Linux rows of the newest version must be .tar.gz (older rows may be .tar.xz); every url is the release
+# url of its own tag and filename.
+# shellcheck disable=SC2016 # jq program, not shell
+jq -r --slurpfile old "$old" --arg prefix "$URL_PREFIX" --arg linux "$LINUX_TARGETS" --argjson force "$force" '
+    def ver: split(".") | map(tonumber);
+    def key: "\(.version) \(.target)";
+    def seg: test("\\A[A-Za-z0-9._+-]+\\z") and . != "." and . != "..";
+    def okurl: type == "string" and startswith($prefix) and (.[($prefix | length):] | split("/") | length == 2 and all(.[]; seg));
+    . as $n | $old[0] as $o |
+    ( if .schema != 1 then "schema is \(.schema), expected 1" else empty end ),
+    ( if (.latest.channel // "") != "stable" then "latest is on channel \(.latest.channel // "missing"), not stable" else empty end ),
+    ( if (.latest.version // "" | test("\\A[0-9]+\\.[0-9]+\\.[0-9]+\\z") | not) then "latest.version \(.latest.version) is not x.y.z"
+      elif ([.releases[] | select(.channel == "stable")] | first | .version) != .latest.version then "first stable row is \([.releases[] | select(.channel == "stable")] | first | .version), the installer would pin it, but latest.version is \(.latest.version)" else empty end ),
+    ( .releases | group_by(key)[] | select(length > 1) | "duplicate row \(.[0] | key)" ),
+    ( .releases[] | select(.sha256 | (type == "string" and test("\\A[0-9a-f]{64}\\z")) | not) | "\(key): sha256 is not 64 lowercase hex" ),
+    ( .releases[] | select(.url | okurl | not) | "\(key): url \(.url) is not a release asset under \($prefix)" ),
+    ( .releases[] | select(.tag | (type == "string" and seg) | not) | "\(key): tag \(.tag) is not a single path segment" ),
+    ( .releases[] | select(.filename | (type == "string" and seg and test("\\.(zip|tar\\.gz|tar\\.xz)\\z")) | not) | "\(key): filename \(.filename) is not a single segment with a known archive extension" ),
+    ( .releases[] | select(.url != $prefix + .tag + "/" + .filename) | "\(key): url \(.url) does not match tag \(.tag) and filename \(.filename)" ),
+    ( .releases[] | select(.version == $n.latest.version and (.target | test("-unknown-linux-")) and (.filename | endswith(".tar.gz") | not)) | "\(key): linux archive \(.filename) is not .tar.gz" ),
+    ( ($linux | split(" ")[]) as $t | select([$n.releases[] | select(.version == $n.latest.version and .target == $t)] | length == 0)
+      | "\($n.latest.version) \($t): required Linux target missing" ),
+    ( if $force == 1 then empty else
+        ( if (.latest.version | test("\\A[0-9]+\\.[0-9]+\\.[0-9]+\\z")) and ($o.latest.version | ver) > (.latest.version | ver) then "downgrade: newest stable \(.latest.version) is lower than vendored \($o.latest.version)" else empty end ),
         ( $o.releases[] as $r | ($n.releases | map(select(key == ($r | key))) | first) as $m
           | if $m == null then "\($r | key): vendored row removed upstream"
             elif $m != $r then "\($r | key): vendored row changed upstream" else empty end ),
-        ( ($linux | split(" ")[]) as $t | select([$n.releases[] | select(.version == $n.latest.version and .target == $t)] | length == 0)
-          | "\($n.latest.version) \($t): required Linux target missing" ),
         ( ($o.releases | map(select(.version == $o.latest.version) | .target)[]) as $t
           | select([$n.releases[] | select(.version == $n.latest.version and .target == $t)] | length == 0)
           | "\($n.latest.version) \($t): target covered by the vendored pin \($o.latest.version) is missing" )
-    ' "$new" >"$tmp/violations" 2>"$tmp/jqerr" || {
-        sed 's/^/update-dist: /' "$tmp/jqerr" >&2
-        die "guard run failed on the upstream manifest" 5
-    }
-    if [ -s "$tmp/violations" ]; then
-        sed 's/^/guard violation: /' "$tmp/violations" >&2
-        exit 5
-    fi
+      end )
+' "$new" >"$tmp/violations" 2>"$tmp/jqerr" || {
+    sed 's/^/update-dist: /' "$tmp/jqerr" >&2
+    die "guard run failed on the upstream manifest" 5
+}
+if [ -s "$tmp/violations" ]; then
+    sed 's/^/guard violation: /' "$tmp/violations" >&2
+    exit 5
 fi
 
 changed=false
