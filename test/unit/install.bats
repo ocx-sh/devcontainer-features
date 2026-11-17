@@ -298,6 +298,31 @@ assert_plain_form_refused() {
     VERSION=latest assert_plain_form_refused
 }
 
+@test "S11 a .tar.xz release stops before any download, exit 2, naming the oldest .tar.gz build" {
+    _h=$(printf '0%.0s' $(seq 64))
+    _row() { printf '{"version":"%s","channel":"stable","tag":"v%s","target":"%s","filename":"ocx-%s.%s","sha256":"%s","url":"https://example.test/rel/v%s/ocx-%s.%s"},' "$1" "$1" "$MUSL" "$MUSL" "$2" "$_h" "$1" "$MUSL" "$2"; }
+    _rows="$(_row 0.4.2 tar.xz)$(_row 0.4.3 tar.gz)$(_row 0.5.0 tar.gz)"
+    reseal "s#^  \"releases\": \\[#&\\n    $_rows#"
+    VERSION=0.4.2 inst
+    assert_failure 2
+    assert_output --partial '0.4.2'
+    assert_output --partial '.tar.gz releases only'
+    assert_output --partial 'build is 0.4.3'
+    run grep -c -e 'tar.gz' -e 'tar.xz' "$STUB_LOG"
+    assert_output 0
+}
+
+@test "S11 without any .tar.gz build for the target the message says so" {
+    _h=$(printf '0%.0s' $(seq 64))
+    _row="{\"version\":\"0.4.2\",\"channel\":\"stable\",\"tag\":\"v0.4.2\",\"target\":\"$MUSL\",\"filename\":\"ocx-$MUSL.tar.xz\",\"sha256\":\"$_h\",\"url\":\"https://example.test/x.tar.xz\"},"
+    reseal "s#^  \"releases\": \\[#&\\n    $_row#"
+    sed -i "s#\"filename\":\"ocx-$MUSL.tar.gz\"#\"filename\":\"ocx-$MUSL.zip\"#" "$SANDBOX/src/dist.json"
+    reseal 's#x#x#'
+    VERSION=0.4.2 inst
+    assert_failure 2
+    assert_output --partial 'manifest has none'
+}
+
 @test "bundled manifest tampered exits 4 and installs nothing" {
     printf ' ' >>"$SANDBOX/src/dist.json"
     inst

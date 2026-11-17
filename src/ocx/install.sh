@@ -603,6 +603,18 @@ resolve_release() {
     case "$OCXF_ROW_TAG$OCXF_ROW_FILE" in
         '' | *[!A-Za-z0-9._-]*) err "release row for $ocxf_want has an unsafe tag or filename" 4 ;;
     esac
+    case $OCXF_ROW_FILE in
+        *.tar.gz) ;;
+        *)
+            # safe_extract only gunzips: stop before the download, not after it
+            ocxf_oldest=$(manifest_leaves | grep "\"target\"[[:space:]]*:[[:space:]]*\"$OCXF_TARGET\"" |
+                grep '"filename"[[:space:]]*:[[:space:]]*"[^"]*\.tar\.gz"' |
+                sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+                sort -t. -k1,1n -k2,2n -k3,3n | head -1)
+            [ -n "$ocxf_oldest" ] || err "ocx $ocxf_want ships as $OCXF_ROW_FILE; this feature installs .tar.gz releases only and the manifest has none for $OCXF_TARGET" 2
+            err "ocx $ocxf_want ships as $OCXF_ROW_FILE; this feature installs .tar.gz releases only. The oldest $OCXF_TARGET .tar.gz build is $ocxf_oldest: set version to $ocxf_oldest or newer" 2
+            ;;
+    esac
     assert_https_url "$OCXF_ROW_URL"
     OCXF_ARCHIVE_URL=$OCXF_ROW_URL
     if [ -n "$OCXF_MIRROR_URL" ]; then
