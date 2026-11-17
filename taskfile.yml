@@ -51,4 +51,4 @@ tasks:
     desc: Deep tier (nightly verify-deep); JUnit XML goes to target/reports/junit/
     cmds:
       - mkdir -p target/reports/junit
-      - echo "no deep tests yet - TODO wire the slow tier here"
+      - task: test:unit
