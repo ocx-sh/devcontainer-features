@@ -41,7 +41,7 @@ ocx exec -- task test:image IMAGE=alpine        # one base image from test/image
 ocx exec -- task test:images                    # every base image
 ocx exec -- task test:scenarios                 # the scenario suite
 ocx exec -- task test                           # unit, images and scenarios
-ocx exec -- task run IMAGE=debian RUN_AS=vscode # interactive container with the local feature
+ocx exec -- task run IMAGE=debian RUN_AS=vscode # throwaway container with the local feature
 ```
 
 `IMAGE` is an alias from `test/images.txt`, and `RUN_AS` is the user of the interactive shell.
