@@ -1,0 +1,77 @@
+// Offline: budgets never exceed the website's `content` class; page discovery and the HTML cap.
+import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { test } from 'node:test';
+import { ASSERT_MATRIX, assertMatrix, BASE, BUDGET, CATEGORIES, HTML_GZ_MAX, TERMINAL_JS, castPages, sitePages } from '../lighthouse.budgets.mjs';
+import { bestOf, failureLine, htmlFailures } from './lighthouse.mjs';
+
+const KB = 1024;
+test('budgets stay within the website content class', () => {
+  assert.ok(BUDGET.jsBytes <= 11 * KB && BUDGET.totalBytes <= 126 * KB && BUDGET.domElements <= 800);
+  assert.ok(HTML_GZ_MAX <= 14_200);
+});
+
+test('every category must score 1', () => {
+  const a = ASSERT_MATRIX[0].assertions;
+  for (const c of CATEGORIES) assert.deepEqual(a[`categories:${c}`], ['error', { minScore: 1 }]);
+});
+
+function dist() {
+  const d = mkdtempSync(join(tmpdir(), 'dist-'));
+  for (const f of ['index.html', '404.html', 'guides/ci/index.html']) {
+    mkdirSync(join(d, f, '..'), { recursive: true });
+    writeFileSync(join(d, f), '<html></html>');
+  }
+  return d;
+}
+
+test('pages are base-prefixed, sorted, without 404', () => {
+  assert.deepEqual(sitePages(dist()), [`${BASE}`, `${BASE}guides/ci/`]);
+  assert.throws(() => sitePages(join(tmpdir(), 'nope-dist')), /missing dist/);
+});
+
+test('an oversized html page fails', () => {
+  const d = dist();
+  writeFileSync(join(d, 'guides/ci/index.html'), Buffer.from(Array.from({ length: 200_000 }, () => Math.random() * 255 | 0)));
+  assert.deepEqual(htmlFailures(sitePages(d), d).length, 1);
+});
+
+test('a cast page gets the script allowance, the others the content budget', () => {
+  const d = dist();
+  writeFileSync(join(d, 'guides/ci/index.html'), '<div class="ocx-terminal not-content"></div>');
+  const casts = castPages(d);
+  assert.deepEqual(casts, [`${BASE}guides/ci/`]);
+  const [, rest, cast] = assertMatrix(casts);
+  const re = (m) => new RegExp(m.matchingUrlPattern);
+  assert.ok(re(cast).test(`http://x${BASE}guides/ci/`) && !re(rest).test(`http://x${BASE}guides/ci/`));
+  assert.ok(re(rest).test(`http://x${BASE}`) && !re(cast).test(`http://x${BASE}`));
+  assert.equal(cast.assertions['resource-summary:script:size'][1].maxNumericValue, BUDGET.jsBytes + TERMINAL_JS);
+  assert.equal(rest.assertions['resource-summary:script:size'][1].maxNumericValue, BUDGET.jsBytes);
+});
+
+/** `bestOf` over scripted runs: each entry is that run's failed-assertion count. */
+async function script(/** @type {number[]} */ counts) {
+  let n = 0;
+  const res = await bestOf(async () => counts[n++], (c) => Array.from({ length: c }, (_, i) => `f${i}`));
+  return { ...res, used: n };
+}
+
+test('a page passes on its first passing run', async () => {
+  assert.deepEqual(await script([1, 1, 0]).then((r) => [r.failed.length, r.used]), [0, 3]);
+  assert.deepEqual(await script([0, 1, 1]).then((r) => [r.failed.length, r.used]), [0, 1]);
+  assert.deepEqual(await script([1, 0]).then((r) => [r.failed.length, r.used]), [0, 2]);
+});
+
+test('a page that never passes reports its run of fewest failures', async () => {
+  const r = await script([3, 1, 2]);
+  assert.deepEqual([r.used, r.best, r.failed.length], [3, 1, 1]);
+});
+
+test('a category failure names the category and the paint metrics', () => {
+  const a = { auditId: 'categories', auditProperty: 'performance', name: 'minScore', actual: 0.99, operator: '>=', expected: 1 };
+  const lhr = { audits: { 'first-contentful-paint': { displayValue: '1.2 s' } } };
+  assert.match(failureLine('/p/', a, lhr), /category performance minScore 0\.99.*first-contentful-paint 1\.2 s.*speed-index -/);
+  assert.equal(failureLine('/p/', { ...a, auditId: 'dom-size' }, lhr), '/p/: dom-size minScore 0.99 (want >= 1)');
+});
