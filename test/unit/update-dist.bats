@@ -189,11 +189,11 @@ guard() {
     guard seg "$(newver 0.6.9) | (.releases[0].filename) = \"../x.tar.gz\"" "0.6.9"
 }
 
-@test "--force bypasses the guards and writes" {
-    publish '.latest.version = "0.0.1" | .releases |= map(select(.target != "aarch64-apple-darwin"))'
+@test "--force bypasses the policy guards and writes" {
+    publish '.releases |= map(select(.target != "aarch64-apple-darwin"))'
     run_tool "$UPD" --force --from "$UP"
     assert_success
-    assert_output "updated 0.6.8 -> 0.0.1"
+    assert_output "updated 0.6.8 -> 0.6.8"
     cmp "$UP/dist.json" "$R/src/ocx/dist.json"
 }
 
@@ -306,4 +306,24 @@ hostile_refused() {
         assert_success
         [ "$output" = "$(cat "$SANDBOX/jq.tsv")" ]
     done
+}
+
+@test "guard: sha256 with a trailing newline" {
+    guard nl "$(newver 0.6.9) | (.releases[0].sha256) += \"\\n\"" "backslash"
+}
+
+@test "guard: version with a trailing newline" {
+    guard vnl "$(newver 0.6.9) | .latest.version += \"\\n\"" "backslash"
+}
+
+@test "guard: linux row that is not tar.gz" {
+    guard xz "$(newver 0.6.9) | (.releases[] | select(.version == \"0.6.9\" and .target == \"x86_64-unknown-linux-musl\")) |= (.filename = \"ocx.tar.xz\" | .url = \"$BASE_URL/v0.6.9/ocx.tar.xz\")" "x86_64-unknown-linux-musl"
+}
+
+@test "guard: url that does not match tag and filename" {
+    guard urlm "$(newver 0.6.9) | (.releases[0].url) = \"$BASE_URL/v0.6.9/other.tar.gz\"" "does not match"
+}
+
+@test "guard: a newest stable row that is not the latest version" {
+    guard first '.releases = ([.releases[0] | .version = "0.5.0" | .tag = "v0.5.0" | .url = ("'"$BASE_URL"'/v0.5.0/" + .filename)] + .releases)' "first stable row"
 }
