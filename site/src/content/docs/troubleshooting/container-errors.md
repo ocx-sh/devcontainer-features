@@ -1,12 +1,12 @@
 ---
-title: Fix a missing tool or failed restore
-description: Match a missing tool, a lock error or a restore warning in a running dev container to its cause and fix.
+title: Fix a lock or permission error
+description: Match a missing or stale ocx.lock, or a permission error during the restore of a dev container, to its cause and fix.
 sidebar:
-  order: 2
+  order: 3
 ---
 <!-- doc_type: troubleshooting -->
 
-The container built, but a tool is missing in the terminal or the create log shows an `ocx-feature: warning:` line.
+The container built, but the restore failed and the create log shows an `ocx-feature: warning:` line.
 Find the message below.
 Every entry shows the message as ocx or the feature prints it, the cause, and the fix.
 
@@ -17,11 +17,12 @@ The warning names an exit code:
 | Exit code | Meaning |
 |---|---|
 | 65 | `ocx.lock` is stale |
-| 74 | A file or directory belongs to another user |
+| 74 | A file or directory belongs to another user, or the `ocxHome` directory is not writable |
 | 75 | A network or registry request failed |
 | 78 | `ocx.lock` is missing, or a package has no build for this platform |
 
-For a failed image build, see [Fix a failed feature install](./install-errors.md). For a skipped restore, a managed configuration warning or a package with no build for the platform, see [Fix a restore warning](./restore-warnings.md).
+For a failed image build, see [Fix a failed feature install](./install-errors.md). For a skipped restore, a managed configuration warning or a package with no build for the platform, see [Fix a restore warning](./restore-warnings.md). For a tool that is missing from the terminal, see [Fix a tool missing from the terminal](./shell-activation-errors.md).
+[Lifecycle commands](../reference/environment-and-files.md#lifecycle) say when each warning appears, and [Install exit codes](../reference/environment-and-files.md#exit-codes) lists the build codes.
 
 ## Error: ocx.lock not found {#lock-missing}
 
@@ -67,35 +68,6 @@ bash: shfmt: command not found
 
 To fix it, run `ocx lock` and commit the updated `ocx.lock`.
 
-## Error: command not found in a terminal {#command-not-found}
-
-<!-- doc: ts-command-not-found -->
-
-```console
-bash: shfmt: command not found
-```
-
-This issue occurs when the terminal did not put the project tools on `PATH`. Three causes are common.
-The lock is missing or stale, as the two entries above show.
-The terminal started before `ocx lock` or `ocx pull` finished. Or `shellActivation` is `false`, so no shell gets the toolchain.
-
-The feature composes `PATH` once, when an interactive shell starts. A terminal that is already open does not change after `ocx add` or `ocx pull`.
-
-To fix it:
-
-1. Open a new terminal after the lock and the tools are in place.
-2. Run the tool through `ocx exec`, which always works: `ocx exec -- shfmt --version`.
-3. If the option is off, remove `"shellActivation": false` from `devcontainer.json` and rebuild.
-
-```console
-$ bash -ic 'command -v shfmt; ocx exec -- shfmt --version'
-v3.13.1
-```
-
-With `shellActivation` set to `false`, `command -v shfmt` prints nothing and the command exits with status 1.
-The `ocx exec` call still prints `v3.13.1`.
-A script run with `sh -lc` is not an interactive shell either, so use `ocx exec` there.
-
 ## Error: Permission denied on ocx.lock {#store-permission}
 
 <!-- doc: ts-store-permission -->
@@ -121,3 +93,4 @@ $ sudo chown "$(id -un)": ocx.lock
 ```
 
 For a shared store, make the `ocxHome` directory writable by every user who runs `ocx pull`. Without the option, each user keeps a private store in `~/.ocx`.
+With `ocxHome` set, the warning names the directory in its fix line: `the ocxHome directory <path> must exist and be writable by the user who opens the container; the feature does not create it`.

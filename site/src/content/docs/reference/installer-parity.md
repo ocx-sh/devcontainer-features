@@ -1,6 +1,8 @@
 ---
 title: Installer variables and feature options
 description: How each variable of the official ocx install script maps to an option of the Dev Container Feature, or why it has none.
+sidebar:
+  order: 3
 ---
 <!-- doc_type: reference -->
 

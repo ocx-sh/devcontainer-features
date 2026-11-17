@@ -11,6 +11,7 @@ Find that line below.
 Every entry shows the message as the build prints it, the cause, and the fix.
 
 For a download, checksum or platform failure, see [Fix a failed feature install](./install-errors.md).
+[Install exit codes](../reference/environment-and-files.md#exit-codes) lists every code, and [Options](../reference/options.md) lists the allowed values.
 
 ## Error: no ocx build for that version {#version-not-found}
 
@@ -30,6 +31,20 @@ To fix it:
 1. Check the version against the [ocx releases](https://github.com/ocx-sh/ocx/releases).
 2. For a recent release, use `version: "latest"`, which reads the live manifest during the build, or update the feature tag.
 3. Without access to the live manifest, set `distUrl`, as [Use a version outside the baked list](../integrate/mirror-and-air-gapped.md#dist-url) describes.
+
+## Error: this feature installs .tar.gz releases only {#version-too-old}
+
+<!-- doc: ts-version-too-old -->
+```console
+ocx-feature: error: ocx 0.4.2 ships as ocx-x86_64-unknown-linux-musl.tar.xz; this feature installs .tar.gz releases only. The oldest x86_64-unknown-linux-musl .tar.gz build is 0.4.3: set version to 0.4.3 or newer
+```
+
+The build exits with code 2 before any download. The message above comes from `version: "0.4.2"`.
+
+This issue occurs when `version` names an ocx release that ships in another archive format than `.tar.gz`.
+The feature extracts `.tar.gz` archives only, so the first releases cannot install.
+
+To fix it, set `version` to the version the message names, or to any later release.
 
 ## Error: option caBundle is not a readable file {#ca-bundle-missing}
 
@@ -61,4 +76,10 @@ The build exits with code 2. The message above comes from `libc: "glibc"`.
 This issue occurs when an option value does not pass the check that runs before anything is downloaded.
 The same exit code and a message of the form `option <name> must be ...` cover `version`, `distUrl`, `mirrorUrl`, `managedConfig`, `pullGroups` and the boolean options.
 
+Two more checks have their own messages:
+
+- A control character in a string option, such as a tab in a path: `ocx-feature: error: option ocxHome must not contain control characters`.
+- A `managedConfig` or `pullGroups` value that starts with `-`: `ocx-feature: error: option pullGroups must be comma-separated group names (got: -g)`.
+
+Both exit with code 2.
 To fix it, correct the value the message names. [Options](../reference/options.md) lists every option with its allowed values.

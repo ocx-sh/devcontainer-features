@@ -2,7 +2,7 @@
 title: Fix a restore warning
 description: Match a skipped restore, an unsynced managed configuration or a package with no build for the platform to its cause and fix.
 sidebar:
-  order: 4
+  order: 5
 ---
 <!-- doc_type: troubleshooting -->
 
@@ -10,7 +10,9 @@ The lifecycle commands run the restore when the container is created. These entr
 Find the message below.
 Every entry shows the message as ocx or the feature prints it, the cause, and the fix.
 
-For a missing lock, a stale lock or a missing tool in the terminal, see [Fix a missing tool or failed restore](./container-errors.md).
+For a missing lock, a stale lock or a permission error, see [Fix a lock or permission error](./container-errors.md).
+For a tool that is missing in the terminal, see [Fix a tool missing from the terminal](./shell-activation-errors.md).
+[Lifecycle commands](../reference/environment-and-files.md#lifecycle) lists when each hook runs.
 
 ## Warning: not pulling, the project belongs to another user {#root-owned}
 
@@ -21,6 +23,8 @@ ocx-feature: warning: not pulling: /workspaces/demo is owned by another user and
 ```
 
 This issue occurs when the lifecycle hook runs as `root` and the workspace belongs to someone else. This happens when `remoteUser` is `root` on a workspace owned by a regular user.
+The hook checks the project directory, `ocx.lock`, `.ocx` and a project named by `OCX_PROJECT`. Any of them owned by another user triggers the warning.
+
 The hook skips the restore on purpose, so `root` does not take over the lock and the links.
 The container still starts and no tool is fetched.
 
