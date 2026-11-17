@@ -22,6 +22,11 @@ f=$(dirname "$0")/../src/ocx/devcontainer-feature.json
 sed 's/"version": "1.0.0"/"version": "1.0.1"/' "$f" >"$f.new" && mv "$f.new" "$f"
 echo "1.0.0 -> 1.0.1"
 EOT
+    mkdir -p "$R/scripts/release"
+    {
+        printf '#!/bin/sh\necho "verify-assets $(jq -r .latest.version "$1") $(jq -r .latest.version "$2")" >>"%s"\n' "$CALLS"
+        printf 'exit "${FAKE_ASSETS_RC:-0}"\n'
+    } >"$R/scripts/release/verify-assets.sh"
     fake readme.sh FAKE_README_RC </dev/null
     fake check-installer-parity.sh FAKE_PARITY_RC </dev/null
     stub git
@@ -45,6 +50,7 @@ fake() {
     assert_success
     run cat "$CALLS"
     assert_output "update-dist.sh
+verify-assets 0.6.8 0.7.0
 bump-feature-version.sh
 readme.sh
 check-installer-parity.sh"
@@ -117,4 +123,13 @@ check-installer-parity.sh"
     CHANGED=true run_tool "$PREP"
     assert_success
     refute_stub_called "node scripts/generate-docs.mjs"
+}
+
+@test "a GitHub asset digest mismatch stops the run before the bump" {
+    FAKE_ASSETS_RC=5 CHANGED=true run_tool "$PREP"
+    assert_failure 5
+    run cat "$CALLS"
+    assert_output "update-dist.sh
+verify-assets 0.6.8 0.7.0"
+    [ ! -f "$OUT_DIR/tree.patch" ]
 }

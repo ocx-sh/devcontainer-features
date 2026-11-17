@@ -7,11 +7,12 @@
 # release in CHANGELOG.md; always it makes sure CHANGELOG.md has an entry for the feature version.
 # The result is release-tree/tree.patch, a patch of src/, CHANGELOG.md and the generated docs pages that the test and publish jobs apply to a clean checkout.
 # Repo tooling: needs git, jq, node; runs under `pnpm exec` so the pinned devcontainer CLI is on PATH.
-# env: CHANGED          "true" when the manifest digest differs (from detect.sh)
+# env: GH_TOKEN        read access to the public ocx-sh/ocx releases (verify-assets.sh)
+#      CHANGED          "true" when the manifest digest differs (from detect.sh)
 #      OUT_DIR          where tree.patch goes (default release-tree)
 #      GITHUB_OUTPUT, GITHUB_STEP_SUMMARY   written when set
 # Outputs: feature_version, ocx_version, old_ocx_version.
-# Exit: 0 ok, 2 bad state; update-dist.sh exit 4 (digest mismatch) and 5 (guard violation) and
+# Exit: 0 ok, 2 bad state; update-dist.sh exit 4 (digest mismatch) and 5 (guard violation), verify-assets.sh exit 5 and
 #       check-installer-parity.sh exit 1 (mismatch) pass through.
 set -eu
 
@@ -28,7 +29,12 @@ old_ocx=$(jq -r .latest.version src/ocx/dist.json)
 
 if [ "${CHANGED:-false}" = true ]; then
     # GITHUB_OUTPUT is cleared so the helper scripts do not write their own keys into ours.
+    prev=$(mktemp)
+    trap 'rm -f "$prev"' EXIT
+    cp src/ocx/dist.json "$prev"
     GITHUB_OUTPUT='' sh scripts/update-dist.sh
+    # A hash only setup.ocx.sh vouches for is trust on first use: new rows must match the GitHub asset digests.
+    sh scripts/release/verify-assets.sh "$prev" src/ocx/dist.json
     bump=$(GITHUB_OUTPUT='' sh scripts/bump-feature-version.sh patch)
     echo "feature version $bump"
     sh scripts/readme.sh
