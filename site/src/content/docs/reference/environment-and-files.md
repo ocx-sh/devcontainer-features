@@ -60,9 +60,9 @@ The options map to this file as follows.
 
 ### The shell profile {#profile}
 
-With default options `/etc/profile.d/ocx.sh` holds this text.
+With default options `/etc/profile.d/ocx.sh` holds the text below, shortened where a comment says so.
 The outer `case` makes it a no-op in non-interactive shells.
-The code finds the project directory from `OCX_PROJECT` or from the nearest `ocx.toml` above the working directory.
+The omitted code finds the project directory in `__ocxf_d`, from `OCX_PROJECT` or from the nearest `ocx.toml` above the working directory.
 
 The inner `case` runs `ocx env` only when that directory matches a `consentPaths` entry, here `/workspaces` and everything below it.
 A project outside the list runs no `ocx` command and leaves `PATH` unchanged.
@@ -73,28 +73,10 @@ The `consentPaths` option controls the patterns in that `case`, and `pullGroups`
 case $- in
 *i*)
     if [ -x '/usr/local/bin/ocx' ]; then
-        __ocxf_d=${OCX_PROJECT-}
-        if [ -n "$__ocxf_d" ]; then
-            [ -d "$__ocxf_d" ] || case $__ocxf_d in
-            */*) __ocxf_d=${__ocxf_d%/*}; [ -n "$__ocxf_d" ] || __ocxf_d=/ ;;
-            *) __ocxf_d=. ;;
-            esac
-        else
-            __ocxf_d=$(pwd -P 2>/dev/null && printf x) || __ocxf_d=x
-            __ocxf_d=${__ocxf_d%x}; __ocxf_d=${__ocxf_d%?}
-            while [ -n "$__ocxf_d" ] && [ ! -f "$__ocxf_d/ocx.toml" ]; do
-                if [ "$__ocxf_d" = / ]; then __ocxf_d=; else __ocxf_d=${__ocxf_d%/*}; [ -n "$__ocxf_d" ] || __ocxf_d=/; fi
-            done
-        fi
-        if [ -n "$__ocxf_d" ]; then
-            __ocxf_d=$(cd -- "$__ocxf_d" 2>/dev/null && pwd -P && printf x) || __ocxf_d=x
-            __ocxf_d=${__ocxf_d%x}; __ocxf_d=${__ocxf_d%?}
-        fi
+        # ... sets __ocxf_d to the resolved project directory, or to nothing ...
         case $__ocxf_d in
         '/workspaces' | '/workspaces'/*)
-            if [ -n "${BASH_VERSION-}" ]; then __ocxf_sh=bash
-            elif [ -n "${ZSH_VERSION-}" ]; then __ocxf_sh=zsh
-            else __ocxf_sh=sh; fi
+            # ... picks __ocxf_sh: bash, zsh or sh ...
             eval "$('/usr/local/bin/ocx' --offline env --shell="$__ocxf_sh" 2>/dev/null)" || :
             ;;
         esac

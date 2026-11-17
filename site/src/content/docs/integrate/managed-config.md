@@ -119,5 +119,3 @@ The feature then skips the managed source and prints a warning that names it as 
 
 - [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) when the registry sits behind a proxy.
 - [Install from a mirror or with no internet](./mirror-and-air-gapped.md) for the build-time download.
-- [Options](../reference/options.md#opt-managedConfig) describes `managedConfig`.
-- [Fix a restore warning](../troubleshooting/restore-warnings.md#config-not-synced) matches the sync warning to its fix.
