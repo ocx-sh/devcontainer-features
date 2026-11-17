@@ -8,6 +8,7 @@ description: Make a dev container fetch the tools pinned in ocx.toml and ocx.loc
 This page shows how to get the tools pinned in your project's `ocx.toml` into a dev container.
 Afterwards, `ocx exec -- <tool>` and a bare `<tool>` in a new terminal run the locked version.
 The restore needs no option: the default feature entry does it.
+The options [`pull`](../reference/options.md#opt-pull) and [`pullGroups`](../reference/options.md#opt-pullGroups) change it.
 
 ## What the restore does {#hook}
 
@@ -145,3 +146,4 @@ Run `ocx pull` as the project owner instead.
 
 - [Run ocx as root, a named user or a split user](non-root-and-custom-users.md) explains whose store receives the tools.
 - [Pin or upgrade the ocx version](pin-or-upgrade-version.md) controls the ocx version itself.
+- [Lifecycle commands](../reference/environment-and-files.md#lifecycle) lists what runs when the container is created.

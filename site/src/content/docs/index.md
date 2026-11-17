@@ -36,6 +36,10 @@ The tag `:1` keeps the feature on major version 1, so a rebuild takes minor and 
 
 ## Look it up {#look-it-up}
 
+- [Supported images](reference/supported-images.md) lists the base images and architectures the feature installs on
+- [Options](reference/options.md) describes every option and its default
+- [How the install works](concepts/how-the-install-works.md) explains what the build does
+- [Changelog](changelog.md) lists the feature releases and the ocx version each one pins
 - [Source and issues](https://github.com/ocx-sh/devcontainer-features) for the feature on GitHub
 - [The ocx project](https://github.com/ocx-sh/ocx) for the package manager the feature installs
 - [The Dev Containers specification](https://containers.dev/) for how a feature reaches your container

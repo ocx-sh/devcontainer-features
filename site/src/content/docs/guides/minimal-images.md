@@ -18,6 +18,7 @@ The install runs as root at image build and needs these tools:
 - `mktemp`
 - a CA certificate bundle
 
+The [supported images](../reference/supported-images.md) page lists the tested bases.
 The feature installs whatever is missing through the package manager of the image.
 It supports `apt-get`, `apk`, `dnf`, `microdnf`, `yum`, `zypper` and `pacman`.
 It prints one line that names the missing tools.
@@ -115,7 +116,7 @@ Point the `caBundle` option at a PEM file that you copy into the image, and inst
 
 ## Choose the libc build {#libc}
 
-The `libc` option picks the build of the ocx binary.
+The [`libc` option](../reference/options.md#opt-libc) picks the build of the ocx binary.
 
 | Value | Binary | Use |
 |---|---|---|
@@ -141,7 +142,7 @@ If the image lacks glibc 2.28, `gnu` stops the build with exit code 7 and the hi
 
 ## Install to another directory {#install-dir}
 
-The `installDir` option sets the directory that receives the binary.
+The [`installDir` option](../reference/options.md#opt-installDir) sets the directory that receives the binary.
 The directory must be on `PATH` for every user.
 
 <!-- doc: install-dir -->
@@ -164,3 +165,4 @@ The binary then runs only through its full path, `/opt/ocx/bin/ocx version`.
 
 - [Add ocx to a dev container](../quickstart.md) is the first-run walk-through.
 - [Pin or upgrade the ocx version](pin-or-upgrade-version.md) sets the ocx version on any image.
+- [Supported images](../reference/supported-images.md) covers the unsupported cases, including bare BusyBox.
