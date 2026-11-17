@@ -38,6 +38,15 @@ The build exits with code 3.
 This issue occurs when the build cannot fetch the release archive. The network may block the host, or the URL may answer with an error status.
 The download makes three attempts and sends no credentials, so a mirror that asks for a login fails the same way.
 A failed manifest download prints `failed to fetch the release manifest from <url>` instead, followed by the same exit code.
+A certificate the image does not trust adds a `curl` line to each attempt:
+
+<!-- doc: ts-download-untrusted-ca -->
+
+```console
+curl: (60) SSL certificate OpenSSL verify result: unable to get local issuer certificate (20)
+```
+
+In that case set `caBundle`.
 
 To fix it:
 
@@ -53,10 +62,10 @@ To fix it:
 ```console
 ocx-feature: error: checksum mismatch for ocx-x86_64-unknown-linux-musl.tar.gz
   expected: 96ddbd85be99542fcc3f73023103b8c0fcabe8d041a4f7e8abac697eba57d40f
-  got:      <sha256 of the downloaded file>
+  got:      20e7eddb5f587805593ddf99d049d3feb5cc9c32b5ed596f71032db4bd6e28e8
 ```
 
-The build exits with code 4. The text comes from the feature source, and the `got` line carries the real digest of the file the build received.
+The build exits with code 4. The `got` line is the digest of the file the build received, here a mirror archive with one extra byte.
 
 This issue occurs when the downloaded archive is not the file the release manifest lists. A mirror that holds a different build, a proxy that rewrites the body, or a truncated download all cause it.
 The check runs before the archive is extracted, so nothing from the file is installed.
