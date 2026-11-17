@@ -20,7 +20,8 @@ q() {
 
 @test "manifest identity fields" {
     [ "$(q .id)" = ocx ]
-    [ "$(q .version)" = 1.0.0 ]
+    # Every release bumps the version, so only its form is fixed.
+    [[ "$(q .version)" =~ ^[1-9][0-9]*\.[0-9]+\.[0-9]+$ ]]
     [ "$(q .documentationURL)" = "https://ocx.sh/integrations/devcontainer/" ]
     [ "$(q '.customizations.vscode.extensions[0]')" = "ocx-sh.ocx" ]
     [ "$(q '.installsAfter[0]')" = "ghcr.io/devcontainers/features/common-utils" ]
