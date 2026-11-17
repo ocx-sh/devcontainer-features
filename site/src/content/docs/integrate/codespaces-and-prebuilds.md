@@ -13,6 +13,7 @@ The page assumes the repository commits both `ocx.toml` and `ocx.lock`.
 
 ## Know what a prebuild runs {#what-runs}
 
+[Lifecycle commands](../reference/environment-and-files.md#lifecycle) lists every command the feature declares.
 The feature declares two lifecycle commands, and both run as the remote user in the workspace folder:
 
 | Command | What it does |
@@ -44,7 +45,7 @@ This `devcontainer.json` states the two relevant options for clarity:
 ```
 
 Then enable prebuilds for the repository, as [Configuring prebuilds](https://docs.github.com/en/codespaces/prebuilding-your-codespaces/configuring-prebuilds) describes.
-Commit `ocx.lock` next to `ocx.toml`. Without it the restore prints exit code 78 and fetches nothing, as [Error: ocx.lock not found](../../troubleshooting/container-errors/#lock-missing) shows.
+Commit `ocx.lock` next to `ocx.toml`. Without it the restore prints exit code 78 and fetches nothing, as [Error: ocx.lock not found](../troubleshooting/container-errors.md#lock-missing) shows.
 
 Pull more than the default group with `pullGroups`, for example `"pullGroups": "lint,docs"`. The option takes comma-separated group names.
 
@@ -80,7 +81,7 @@ The `actionlint` tool accepts this file.
 
 ## Keep prompts and update checks quiet {#quiet}
 
-Two options keep a prebuilt container free of network calls and prompts at start:
+The options [`noUpdateCheck`](../reference/options.md#opt-noUpdateCheck) and [`consentPaths`](../reference/options.md#opt-consentPaths) keep a prebuilt container free of network calls and prompts at start:
 
 - `noUpdateCheck` is on by default. It writes `self = "manual"` and `toolchain = "manual"` under `[update]` in `/etc/ocx/config.toml`, so `ocx` does not look for a new version.
 - `consentPaths` defaults to `/workspaces/*`. A project below that path needs no prompt. The Dev Container CLI mounts the workspace there.
@@ -105,10 +106,10 @@ $ devcontainer exec --workspace-folder . env OCX_OFFLINE=1 ocx exec -- shfmt --v
 v3.13.1
 ```
 
-In a container whose store is empty the same command exits with code 79 and `package not found`, as [Run with no network](../mirror-and-air-gapped/#offline) shows.
+In a container whose store is empty the same command exits with code 79 and `package not found`, as [Run with no network](./mirror-and-air-gapped.md#offline) shows.
 A terminal in the prebuilt container finds the tools on `PATH` as well, because a new interactive shell composes them from the lock when it starts.
 
 ## Next steps {#next-steps}
 
-- [Fix a missing tool or failed restore](../../troubleshooting/container-errors/) when the prebuild log shows an `ocx-feature: warning:` line.
-- [Build behind a proxy and a custom CA](../proxy-and-custom-ca/) when the prebuild runner sits behind a proxy.
+- [Fix a missing tool or failed restore](../troubleshooting/container-errors.md) when the prebuild log shows an `ocx-feature: warning:` line.
+- [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) when the prebuild runner sits behind a proxy.

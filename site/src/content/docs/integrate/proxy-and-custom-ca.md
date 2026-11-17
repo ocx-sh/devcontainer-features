@@ -59,7 +59,7 @@ The download then fails with this line, repeated on each of the three attempts:
 curl: (60) SSL certificate OpenSSL verify result: unable to get local issuer certificate (20)
 ```
 
-The `caBundle` option takes a path inside the image to a PEM file.
+The [`caBundle`](../reference/options.md#opt-caBundle) option takes a path inside the image to a PEM file.
 Feature options cannot carry a path on your machine, so copy the file into the image first.
 Put the certificate next to `devcontainer.json`, name it `corp-ca.pem`, and add a `COPY` line to the Dockerfile:
 
@@ -84,7 +84,7 @@ Then name the copied path in the option:
 
 The feature runs `curl` with `--cacert` for every download, so the file replaces the system certificates for that download.
 It must therefore hold the root that signs the certificates your proxy presents.
-A path that does not exist in the image stops the build with exit code 2, as [Error: option caBundle is not a readable file](../../troubleshooting/install-errors/#ca-bundle-missing) shows.
+A path that does not exist in the image stops the build with exit code 2, as [Error: option caBundle is not a readable file](../troubleshooting/install-option-errors.md#ca-bundle-missing) shows.
 
 ## Trust it when the container runs {#ca-runtime}
 
@@ -147,9 +147,9 @@ shellcheck  default  sha256:3981b442fff3f6bf9ae93e4c293e53322ffc9135e0b654620bc8
 ```
 
 The access log of the proxy shows a `CONNECT` line for each host the build and the restore reached.
-If a step fails, see [Fix a failed feature install](../../troubleshooting/install-errors/) and [Fix a missing tool or failed restore](../../troubleshooting/container-errors/).
+If a step fails, see [Fix a failed feature install](../troubleshooting/install-errors.md) and [Fix a missing tool or failed restore](../troubleshooting/container-errors.md).
 
 ## Next steps {#next-steps}
 
-- [Install from a mirror or with no internet](../mirror-and-air-gapped/) for a network that cannot reach GitHub at all.
-- [Apply organisation-managed configuration](../managed-config/) to roll these settings out to every container.
+- [Install from a mirror or with no internet](./mirror-and-air-gapped.md) for a network that cannot reach GitHub at all.
+- [Apply organisation-managed configuration](./managed-config.md) to roll these settings out to every container.
