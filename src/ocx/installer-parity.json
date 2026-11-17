@@ -1,0 +1,122 @@
+{
+  "source": "https://github.com/ocx-sh/www-setup/blob/main/src/install.sh",
+  "variables": [
+    {
+      "name": "OCX_BIN_SUBPATH",
+      "status": "not-exposed",
+      "note": "This is an internal constant of the installer, not a setting, so there is nothing to expose."
+    },
+    {
+      "name": "OCX_EXTRA_CA_CERTS",
+      "status": "exposed",
+      "option": "caBundle",
+      "note": "The installer derives it from the CA bundle. The feature sets it from caBundle so ocx trusts that bundle at run time."
+    },
+    {
+      "name": "OCX_HOME",
+      "status": "exposed",
+      "option": "ocxHome",
+      "note": "The ocxHome option sets it for all users. Empty keeps the default ~/.ocx of each user."
+    },
+    {
+      "name": "OCX_INSTALL_CA_BUNDLE",
+      "status": "exposed",
+      "option": "caBundle",
+      "note": "The caBundle option names a PEM file inside the image that is trusted for every download."
+    },
+    {
+      "name": "OCX_INSTALL_DIST_URL",
+      "status": "exposed",
+      "option": "distUrl",
+      "note": "The distUrl option replaces the bundled release manifest with one fetched over HTTPS."
+    },
+    {
+      "name": "OCX_INSTALL_DOWNLOADER",
+      "status": "not-exposed",
+      "note": "The feature probes for curl first and falls back to wget, so no choice is needed."
+    },
+    {
+      "name": "OCX_INSTALL_FORCE",
+      "status": "not-exposed",
+      "note": "An image layer is always a fresh install, so there is never an existing version to replace."
+    },
+    {
+      "name": "OCX_INSTALL_MIRROR_URL",
+      "status": "exposed",
+      "option": "mirrorUrl",
+      "note": "The mirrorUrl option downloads release archives from your own host. Checksums are still enforced."
+    },
+    {
+      "name": "OCX_INSTALL_NO_SETUP",
+      "status": "fixed",
+      "note": "Always on: the feature never runs ocx self setup, which would write the build user's profiles and store. The shellActivation option covers shell setup."
+    },
+    {
+      "name": "OCX_INSTALL_NO_SMOKETEST",
+      "status": "fixed",
+      "note": "Always off: the feature smoke-tests the installed binary every time, so a broken install fails the build."
+    },
+    {
+      "name": "OCX_INSTALL_PRINT_PATH",
+      "status": "not-exposed",
+      "note": "A feature build has no consumer for the printed path, and the installDir option already states it."
+    },
+    {
+      "name": "OCX_INSTALL_QUIET",
+      "status": "not-exposed",
+      "note": "The build log is the only feedback channel in a container build, so the output stays on."
+    },
+    {
+      "name": "OCX_INSTALL_REPO",
+      "status": "not-exposed",
+      "note": "The distUrl and mirrorUrl options cover alternative sources and keep checksum verification enforced."
+    },
+    {
+      "name": "OCX_INSTALL_VERSION",
+      "status": "exposed",
+      "option": "version",
+      "note": "The version option takes an exact version, pinned or latest. The upstream default is the latest release, here it is pinned."
+    },
+    {
+      "name": "OCX_MANAGED_CONFIG",
+      "status": "exposed",
+      "option": "managedConfig",
+      "note": "The managedConfig option sets the OCI reference of an organisation-managed ocx configuration."
+    },
+    {
+      "name": "OCX_NO_MODIFY_PATH",
+      "status": "fixed",
+      "note": "Always on: no per-user profile is modified at build time. Setting shellActivation to false is the equivalent switch for the project toolchain."
+    }
+  ],
+  "featureOnly": [
+    {
+      "option": "libc",
+      "note": "The upstream installer detects the C library itself, while the feature defaults to musl, which runs on every Linux image."
+    },
+    {
+      "option": "installDir",
+      "note": "The installer uses the per-user store, while the feature places the binary in one directory that is on PATH."
+    },
+    {
+      "option": "noUpdateCheck",
+      "note": "The installer has no counterpart, while the feature turns off the ocx update check by default so the container makes no needless network call."
+    },
+    {
+      "option": "consentPaths",
+      "note": "The installer has no counterpart, while the feature lets projects under the listed paths activate without a prompt."
+    },
+    {
+      "option": "pull",
+      "note": "The installer only installs ocx, while the feature can also restore the project toolchain at build time."
+    },
+    {
+      "option": "pullGroups",
+      "note": "The installer has no toolchain step, while the feature restores the listed tool groups when pull is on."
+    },
+    {
+      "option": "shellActivation",
+      "note": "The installer edits shell profiles itself, while the feature puts the project toolchain on PATH in new shells on request."
+    }
+  ]
+}

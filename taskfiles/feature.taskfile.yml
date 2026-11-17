@@ -36,3 +36,18 @@ tasks:
         -e OCXF_FILE={{.FILE}} -e "OCXF_LEGS={{.LEGS}}"
         -v "$PWD:/work:ro" -v "$PWD/target/reports:/work/target/reports"
         -w /work {{.IMAGE}} sh test/unit/run-legs.sh
+
+  dist:check:
+    desc: Compare the vendored release manifest with setup.ocx.sh; exit 10 when an update is available
+    cmds:
+      - cmd: "sh scripts/update-dist.sh --check"
+
+  dist:update:
+    desc: Refresh the vendored release manifest from setup.ocx.sh (guarded, additions only)
+    cmds:
+      - cmd: "sh scripts/update-dist.sh"
+
+  parity:check:
+    desc: Compare installer-parity.json with the live official installer
+    cmds:
+      - cmd: "sh scripts/check-installer-parity.sh"
