@@ -41,6 +41,8 @@ tasks:
         vars: {IMAGE: debian}
       - task: test:image
         vars: {IMAGE: alpine}
+      - task: test:scenarios
+        vars: {SCENARIO: user-existing user-created-later hook-no-lock fail-libc-gnu-alpine}
       - task: release:rehearse
 
   ci:build:
@@ -61,3 +63,16 @@ tasks:
       - mkdir -p target/reports/junit
       - task: test:unit
       - task: test:images
+      - task: test:scenarios
+
+  test:
+    desc: Everything runnable locally - lint, unit, images, scenarios; each step reports, the first failure names itself at the end
+    cmds:
+      - |
+        failed=
+        for t in lint test:unit test:images test:scenarios; do
+          echo "=== task $t"
+          task "$t" || failed="$failed $t"
+        done
+        [ -z "$failed" ] || { echo "test: FAILED:$failed" >&2; exit 1; }
+        echo "test: lint, test:unit, test:images, test:scenarios all passed"
