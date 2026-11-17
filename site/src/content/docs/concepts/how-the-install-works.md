@@ -117,7 +117,7 @@ Everything else belongs to the user who runs ocx.
 Each user has a private store in `~/.ocx`, which commands such as `ocx about` and `ocx env` create for that user.
 The project's `ocx.lock` and `.ocx/toolchain` belong to the user who ran the restore.
 
-```bash-run
+```bash
 # doc: how-install-files
 stat -c '%a %U' /usr/local/bin/ocx
 cat /usr/local/share/ocx-feature/ocx-version
