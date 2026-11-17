@@ -5,7 +5,9 @@
 # publish.sh: land and publish a tested release tree. Commit it to the default branch, tag it, push
 # the feature to ghcr.io with the pinned devcontainer CLI, then verify the registry (verify.sh).
 # Order matters: a rejected push (main moved) stops the run before anything is published, and nothing
-# is ever force-pushed. Safe to re-run: an existing tag is kept, an already published version is skipped.
+# is ever force-pushed. Not atomic: once the commit and tag are pushed, a failed publish leaves a tagged but
+# unpublished version. detect.sh finds that state (tag on the remote, no such version in the registry) and the
+# next run publishes it; re-running here keeps the tag and skips a version that is already published.
 # Run it in a checkout with the release tree applied, under `pnpm exec` (devcontainer on PATH).
 # Repo tooling: needs git, docker, devcontainer, base64.
 # env: FEATURE_VERSION, OCX_VERSION   x.y.z of the feature and of the pinned ocx
