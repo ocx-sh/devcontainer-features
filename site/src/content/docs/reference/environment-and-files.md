@@ -27,7 +27,7 @@ The feature also adds one marked block to each of these system rc files that exi
 `debian:stable-slim` has `/etc/bash.bashrc`, and `alpine:3` has none of them.
 The block on Debian reads as follows.
 
-```text
+```console
 # >>> ocx devcontainer feature >>>
 [ -r /etc/profile.d/ocx.sh ] && . /etc/profile.d/ocx.sh
 # <<< ocx devcontainer feature <<<
@@ -89,22 +89,18 @@ Two options add exports to `/etc/profile.d/ocx.sh`: `ocxHome` adds `export OCX_H
 The lifecycle hooks export the same values for their own run.
 
 In a new interactive bash shell inside a project that pins one tool, `shfmt`, the environment differs from the image default in `PATH` only.
-This is the output of `ocx --offline env --shell=bash` in that project, which the profile evaluates.
-
-```sh
-__ocx_p='/workspaces/ws-debian/.ocx/toolchain/links/default/shfmt/content'; PATH=":${PATH-}:"; while [ "$PATH" != "${PATH//:"$__ocx_p":/:}" ]; do PATH="${PATH//:"$__ocx_p":/:}"; done; while [ "$PATH" != "${PATH//::/:}" ]; do PATH="${PATH//::/:}"; done; PATH="${PATH#:}"; PATH="${PATH%:}"; export PATH="$__ocx_p${PATH:+:${PATH}}"; unset __ocx_p
-```
+The profile evaluates the output of `ocx --offline env --shell=bash`, which prepends the project link directory to `PATH`.
 
 The resulting `PATH` starts with the project link directory.
 
-```text
+```console
 /workspaces/ws-debian/.ocx/toolchain/links/default/shfmt/content:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ```
 
 Outside a project the same command fails with exit code 64 and the profile ignores the failure, so `PATH` stays unchanged.
 Non-interactive shells, including `sh -lc`, run no activation code.
 
-```text
+```console
 error: no ocx.toml found in /tmp or any parent; run `ocx init` to create one
 ```
 
@@ -122,7 +118,7 @@ The hooks never fail the container.
 A failing ocx command produces one warning and the hook exits 0.
 This is the warning for a project that has an `ocx.toml` and no `ocx.lock`.
 
-```text
+```console
 ocx-feature: warning: ocx pull failed with exit code 78.
   attempted: /usr/local/bin/ocx pull
   fix: run "ocx lock" in the project and commit ocx.lock
@@ -137,7 +133,7 @@ ocx-feature: warning: ocx pull failed with exit code 78.
 
 When the hook runs as root and the project directory belongs to another user, it pulls nothing and warns instead.
 
-```text
+```console
 ocx-feature: warning: not pulling: /workspaces/ws-debian is owned by another user and this hook runs as root, which would take over ocx.lock and the toolchain links; run ocx pull as that user
 ```
 

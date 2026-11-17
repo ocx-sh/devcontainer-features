@@ -15,7 +15,7 @@ The devcontainer CLI adds the feature as one layer on top of the base image.
 It runs `install.sh` as root with the options as upper-case environment variables, and it prints them first.
 The log starts with this banner.
 
-```text
+```console
 Feature       : ocx
 Description   : Installs the ocx package manager and restores the project toolchain from ocx.toml.
 Version       : 1.0.0
@@ -43,14 +43,14 @@ It checks the tools it needs: a downloader (`curl` or `wget`), `tar`, `gzip`, a 
 When something is missing, the script installs it through the image's package manager (`apt-get`, `apk`, `dnf`, `microdnf`, `yum`, `zypper` or `pacman`) and checks again.
 On Debian the log shows one line before the package manager output.
 
-```text
+```console
 ocx-feature: installing missing prerequisites: curl-or-wget ca-bundle
 ```
 
 `alpine:3` already has everything, so the same build installs nothing.
 It prints a warning, because Alpine ships a BusyBox `wget` that does not check the server certificate.
 
-```text
+```console
 ocx-feature: warning: BusyBox wget: no TLS floor and the server certificate may go unchecked; install curl for a verified download
 ```
 
@@ -58,7 +58,7 @@ The script then picks the release row for the target from the release manifest.
 It downloads the archive over HTTPS, verifies it, extracts it and runs the binary once.
 The last line of a successful build names the result.
 
-```text
+```console
 ocx-feature: installed ocx 0.6.8 (x86_64-unknown-linux-musl) at /usr/local/bin/ocx
 ```
 
@@ -125,7 +125,7 @@ ocx about >/dev/null
 stat -c %U ~/.ocx
 ```
 
-```text
+```console
 755 root
 0.6.8
 root
@@ -140,7 +140,7 @@ Image build and container creation are separate events.
 The container starts from the finished image, and the devcontainer CLI then runs the lifecycle commands of the feature as the remote user.
 The log shows them in this order.
 
-```text
+```console
 Container started
 Running the onCreateCommand from Feature './ocx'...
 Running the updateContentCommand from Feature './ocx'...

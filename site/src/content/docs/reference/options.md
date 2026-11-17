@@ -8,6 +8,7 @@ The ocx Dev Container Feature takes 13 options in the `features` object of `devc
 Each option has a type, a default value and, for some, a closed list of allowed values.
 An option you leave out keeps its default, so `"ghcr.io/ocx-sh/devcontainer-features/ocx:1": {}` is a complete configuration.
 The build validates every option and stops with exit code 2 on a value it cannot use.
+Each example below shows one option as a line of the object that follows the feature reference.
 
 The devcontainer CLI passes each option to the install script as an upper-case environment variable, for example `CABUNDLE`.
 Boolean options accept `true` and `false`, and also `1`, `0`, `yes` and `no`.
@@ -46,7 +47,7 @@ An exact version such as `0.6.8` is looked up in the bundled manifest.
 The build fails with exit code 2 when that manifest has no such build.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "version": "latest" } } }
+"version": "latest"
 ```
 
 ## libc {#opt-libc}
@@ -57,7 +58,7 @@ Selects the C library flavour of the ocx binary.
 `auto` installs the `gnu` build when the image has glibc 2.28 or later and the `musl` build otherwise.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "libc": "auto" } } }
+"libc": "auto"
 ```
 
 ## distUrl {#opt-distUrl}
@@ -67,7 +68,7 @@ A URL whose file name is a 64-digit SHA-256 digest followed by `.json` is verifi
 The build refuses a rolling manifest when it can only download through a BusyBox `wget` that does not validate certificates.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "distUrl": "https://mirror.example.com/ocx/dist.json" } } }
+"distUrl": "https://mirror.example.com/ocx/dist.json"
 ```
 
 ## mirrorUrl {#opt-mirrorUrl}
@@ -77,7 +78,7 @@ The archive checksum from the manifest is still verified, so a mirror cannot sub
 The value must be an HTTPS URL.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "mirrorUrl": "https://mirror.example.com/ocx-releases" } } }
+"mirrorUrl": "https://mirror.example.com/ocx-releases"
 ```
 
 ## caBundle {#opt-caBundle}
@@ -88,7 +89,7 @@ When the file is at most 32 KiB, the feature also writes it as `extra_ca_certs` 
 A larger file produces a warning and ocx is not told about it.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "caBundle": "/usr/local/share/ca-certificates/corp-root.pem" } } }
+"caBundle": "/usr/local/share/ca-certificates/corp-root.pem"
 ```
 
 ## managedConfig {#opt-managedConfig}
@@ -98,7 +99,7 @@ The feature writes it as `[managed] source` with `required = false`, and the `on
 The reference may contain letters, digits and the characters `. _ : / @ -`.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "managedConfig": "registry.example.com/ocx/org-config:1" } } }
+"managedConfig": "registry.example.com/ocx/org-config:1"
 ```
 
 ## ocxHome {#opt-ocxHome}
@@ -108,7 +109,7 @@ The value is exported by `/etc/profile.d/ocx.sh` and by the lifecycle hooks.
 It must be an absolute path that every user of the container can write to.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "ocxHome": "/opt/ocx-home" } } }
+"ocxHome": "/opt/ocx-home"
 ```
 
 ## installDir {#opt-installDir}
@@ -118,7 +119,7 @@ The path must be absolute and the directory must be on `PATH`.
 The default `/usr/local/bin` is on `PATH` in every common image.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "installDir": "/usr/local/sbin" } } }
+"installDir": "/usr/local/sbin"
 ```
 
 ## noUpdateCheck {#opt-noUpdateCheck}
@@ -139,7 +140,7 @@ Each entry must be an absolute path without `..`, and an entry may end in `*`.
 An empty value writes no section, so every project asks first.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "consentPaths": "/workspaces/*:/home/vscode/src/*" } } }
+"consentPaths": "/workspaces/*:/home/vscode/src/*"
 ```
 
 ## pull {#opt-pull}
@@ -159,7 +160,7 @@ Names may contain letters, digits and the characters `. _ -`, separated by comma
 An empty value restores the default group only.
 
 ```jsonc
-{ "features": { "ghcr.io/ocx-sh/devcontainer-features/ocx:1": { "pullGroups": "default,test" } } }
+"pullGroups": "default,test"
 ```
 
 ## shellActivation {#opt-shellActivation}
