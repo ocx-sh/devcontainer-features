@@ -68,7 +68,7 @@ run_checked() {
 
 do_on_create() {
     [ -n "${OCXF_MANAGED_CONFIG:-}" ] || return 0
-    run_checked 'config setup' "$OCXF_BIN" config setup --managed-config "$OCXF_MANAGED_CONFIG"
+    run_checked 'config setup' "$OCXF_BIN" config setup "--managed-config=$OCXF_MANAGED_CONFIG"
 }
 
 # project_dir: the directory of the project ocx will use: OCX_PROJECT (a directory or a file) when set,
@@ -106,7 +106,7 @@ do_update_content() {
         return 0
     fi
     if [ -n "${OCXF_PULL_GROUPS:-}" ]; then
-        run_checked pull "$OCXF_BIN" pull -g "$OCXF_PULL_GROUPS"
+        run_checked pull "$OCXF_BIN" pull "--group=$OCXF_PULL_GROUPS"
     else
         run_checked pull "$OCXF_BIN" pull
     fi

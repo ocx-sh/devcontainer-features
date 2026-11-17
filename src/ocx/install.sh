@@ -141,7 +141,7 @@ parse_options() {
 
     OCXF_MANAGED_CONFIG=${MANAGEDCONFIG:-}
     case "$OCXF_MANAGED_CONFIG" in
-        *[!A-Za-z0-9._:/@-]*) err "option managedConfig must be an OCI reference (got: $OCXF_MANAGED_CONFIG)" 2 ;;
+        -* | *[!A-Za-z0-9._:/@-]*) err "option managedConfig must be an OCI reference (got: $OCXF_MANAGED_CONFIG)" 2 ;;
     esac
 
     OCXF_OCX_HOME=${OCXHOME:-}
@@ -156,7 +156,7 @@ parse_options() {
 
     OCXF_PULL_GROUPS=${PULLGROUPS:-}
     case "$OCXF_PULL_GROUPS" in
-        *[!A-Za-z0-9_.,-]* | ,* | *, | *,,*) err "option pullGroups must be comma-separated group names (got: $OCXF_PULL_GROUPS)" 2 ;;
+        -* | *[!A-Za-z0-9_.,-]* | ,* | *, | *,,*) err "option pullGroups must be comma-separated group names (got: $OCXF_PULL_GROUPS)" 2 ;;
     esac
 }
 

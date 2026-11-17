@@ -76,16 +76,16 @@ warnings() { printf '%s\n' "$output" | grep -c 'warning:' || true; }
     refute_stub_called "ocx pull"
 }
 
-@test "groups are passed with -g" {
+@test "groups are passed as --group=VALUE so a value never reads as a flag" {
     write_env OCXF_PULL_GROUPS=a,b
     hook update-content
-    assert_stub_called "ocx pull -g a,b"
+    assert_stub_called "ocx pull --group=a,b"
 }
 
 @test "update-content never runs the managed config" {
     write_env OCXF_MANAGED_CONFIG=ocx.sh/c/d:u
     hook update-content
-    refute_stub_called "ocx config setup --managed-config ocx.sh/c/d:u"
+    refute_stub_called "ocx config setup --managed-config=ocx.sh/c/d:u"
 }
 
 @test "on-create applies the managed config with config setup" {
@@ -93,7 +93,7 @@ warnings() { printf '%s\n' "$output" | grep -c 'warning:' || true; }
     hook on-create
     assert_success
     assert_output ""
-    assert_stub_called "ocx config setup --managed-config ocx.sh/c/d:u"
+    assert_stub_called "ocx config setup --managed-config=ocx.sh/c/d:u"
     refute_stub_called "ocx pull"
 }
 

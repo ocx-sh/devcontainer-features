@@ -538,6 +538,13 @@ b"; do
     done
 }
 
+@test "S6 a managedConfig or pullGroups value starting with a dash exits 2" {
+    MANAGEDCONFIG=-x.sh/a/b:1 assert_bad_option "option managedConfig"
+    MANAGEDCONFIG=--managed-config assert_bad_option "option managedConfig"
+    PULLGROUPS=-h assert_bad_option "option pullGroups"
+    PULLGROUPS=--all assert_bad_option "option pullGroups"
+}
+
 @test "S4 control characters in a string option exit 2 naming the option" {
     esc=$(printf '\033') tab=$(printf '\t') cr=$(printf '\r') del=$(printf '\177') nl='
 '
