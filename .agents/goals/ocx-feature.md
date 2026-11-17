@@ -103,10 +103,12 @@ Each item is met only with evidence: the commit, command output, run URL or PR U
   publishes nothing and opens an issue. Proven by one real run.
   Partial 2026-11-17: workflow and scripts in [2a0bac0](https://github.com/ocx-sh/devcontainer-features/commit/2a0bac0) ([#7](https://github.com/ocx-sh/devcontainer-features/pull/7)). Dry run [43999898334](https://github.com/ocx-sh/devcontainer-features/actions/runs/43999898334): detect, prepare and amd64 test green, arm64 test red (19 unit tests on the busybox leg assume x86_64), publish skipped as designed. Open: arm64 fix, then one real run.
   Partial 2026-11-17: first real run [44020879363](https://github.com/ocx-sh/devcontainer-features/actions/runs/44020879363) (`publish_current`): detect, prepare, lint, unit, image and scenario matrix on amd64 and arm64, publish and registry verification green. Open: a real run of the update path (new manifest, bump, commit). A rehearsal with a snapshot one version behind showed that 20 unit tests assume the pin is 0.6.8, so the matrix would have blocked the next ocx release; fix in progress.
-  Evidence 2026-11-17: real run [44030810449](https://github.com/ocx-sh/devcontainer-features/actions/runs/44030810449) from a vendored manifest one ocx release behind ([#20](https://github.com/ocx-sh/devcontainer-features/pull/20)): detect saw the newer manifest, prepare updated the vendored copy to digest `ded01b4b…`, bumped the feature to 1.0.1 and wrote the changelog entry, the matrix passed on amd64 and arm64, publish pushed [7e8673a](https://github.com/ocx-sh/devcontainer-features/commit/7e8673a) (`chore(release): ocx 0.6.8, feature 1.0.1`, by `github-actions[bot]`) and tag `v1.0.1`, published `ocx:1.0.1` (digest `sha256:d290b8c5708050a7c5baa06c8d3da78826e04fd663286317a2a6b16e3bce3fbe`, also `:1`) and verified the pushed layer against `src/ocx`. Red matrix proven too: run [44028287563](https://github.com/ocx-sh/devcontainer-features/actions/runs/44028287563) failed its unit tests on the bumped tree, skipped publish and opened [#21](https://github.com/ocx-sh/devcontainer-features/issues/21), which the green run closed. Both defects that run chain exposed are fixed ([#19](https://github.com/ocx-sh/devcontainer-features/pull/19), [#22](https://github.com/ocx-sh/devcontainer-features/pull/22)). Not yet seen: a run started by the schedule (GitHub throttles the cron, see Decisions taken) or by a dispatch.
+  Evidence 2026-11-17: real run [44030810449](https://github.com/ocx-sh/devcontainer-features/actions/runs/44030810449) from a vendored manifest one ocx release behind ([#20](https://github.com/ocx-sh/devcontainer-features/pull/20)): detect saw the newer manifest, prepare updated the vendored copy to digest `ded01b4b…`, bumped the feature to 1.0.1 and wrote the changelog entry, the matrix passed on amd64 and arm64, publish pushed [7e8673a](https://github.com/ocx-sh/devcontainer-features/commit/7e8673a) (`chore(release): ocx 0.6.8, feature 1.0.1`, by `github-actions[bot]`) and tag `v1.0.1`, published `ocx:1.0.1` (digest `sha256:d290b8c5708050a7c5baa06c8d3da78826e04fd663286317a2a6b16e3bce3fbe`, also `:1`) and verified the pushed layer against `src/ocx`. Red matrix proven too: run [44028287563](https://github.com/ocx-sh/devcontainer-features/actions/runs/44028287563) failed its unit tests on the bumped tree, skipped publish and opened [#21](https://github.com/ocx-sh/devcontainer-features/issues/21), which the green run closed. Both defects that run chain exposed are fixed ([#19](https://github.com/ocx-sh/devcontainer-features/pull/19), [#22](https://github.com/ocx-sh/devcontainer-features/pull/22)). Schedule proven: the first cron-started run [44067670846](https://github.com/ocx-sh/devcontainer-features/actions/runs/44067670846) (event `schedule`, 2026-11-17T10:44Z) ran detect with the job token and printed `nothing to do: vendored manifest matches setup.ocx.sh (ded01b4ba055)`. Dispatch proven: [44034946408](https://github.com/ocx-sh/devcontainer-features/actions/runs/44034946408).
 - [ ] "Dispatch wired" — `www-setup` dispatches after its `dist.json` publish;
   evidence is the `www-setup` PR and a received dispatch run here.
   Partial 2026-11-17: [ocx-sh/www-setup#43](https://github.com/ocx-sh/www-setup/pull/43) open (59 checks pass; the 2 Windows smoke jobs fail the same way on that repository's `main`). Open: a received dispatch run, which needs the owner to merge that pull request.
+  Receiver proven 2026-11-17: a `dist-updated` repository dispatch in the payload shape of `scripts/dispatch-dist-updated.sh` (`version`, `sha256`, `url`), sent with `gh api -X POST repos/ocx-sh/devcontainer-features/dispatches`, started run [44034946408](https://github.com/ocx-sh/devcontainer-features/actions/runs/44034946408): detect validated the payload, asked the registry with the job token and printed `nothing to do: vendored manifest matches setup.ocx.sh (ded01b4ba055)` and `woken by dist-updated for ocx 0.6.8`; prepare, test and publish skipped. Blocked on the owner: the sender, which needs [ocx-sh/www-setup#43](https://github.com/ocx-sh/www-setup/pull/43) merged and `OCX_ANNOUNCE_TOKEN` scoped to this repository.
+  Sender merged 2026-11-17: [ocx-sh/www-setup#43](https://github.com/ocx-sh/www-setup/pull/43) is on `main` (9ed5cd6); its `update-dist` workflow notifies this repository after every publish step. Open: the first dispatch sent by `www-setup` itself, which arrives with its next `update-dist` run (hourly cron, throttled by GitHub).
 - [x] "`main` protected" — a default-branch ruleset mirroring the siblings, with
   the release workflow still able to land its commit.
   Partial 2026-11-17: ruleset 27418948 active (deletion and non-fast-forward blocked). Open: the release workflow landing its commit in a real run.
@@ -125,11 +127,12 @@ Each item is met only with evidence: the commit, command output, run URL or PR U
   checks green at 245b2ec; `task verify` and `task baseline:check` exit 0
   locally); fleet entry
   [ocx-sh/conventions#35](https://github.com/ocx-sh/conventions/pull/35) open.
-- [ ] "Docs site" — `@ocx-sh/theme` site in this repo, deployed to
+- [x] "Docs site" — `@ocx-sh/theme` site in this repo, deployed to
   `https://ocx.sh/integrations/devcontainer/`; `ocx-site check`, Lighthouse
   and link checks pass.
   Partial 2026-11-17: site scaffold, `site:build`, `site:check` and the Lighthouse gate merged in [#2](https://github.com/ocx-sh/devcontainer-features/pull/2); CI job `docs` green. Open: deploy, blocked on the owner chain (website claim merge, theme release, conventions pin).
   Blocked on the owner 2026-11-17: the deploy run [44018301662](https://github.com/ocx-sh/devcontainer-features/actions/runs/44018301662) fails with `nav.json: ocx-sh/devcontainer-features owns no claim`, because the template pins the deploy action at v0.3.0 and the newest theme release v0.6.0 predates the merged claim. Needed: a theme release tag that contains the claim, then the conventions pin bump. `ocx-site check`, link checks and Lighthouse pass in the `docs` job of every pull request.
+  Evidence 2026-11-17: deployed by run [44064261757](https://github.com/ocx-sh/devcontainer-features/actions/runs/44064261757) (`uploaded 96 files`) after [#24](https://github.com/ocx-sh/devcontainer-features/pull/24) moved the baseline to conventions v0.3.6 and the site to the released `@ocx-sh/theme` 0.7.0. Through public DNS, `https://ocx.sh/integrations/devcontainer/`, `/quickstart/`, `/reference/options/` and `/troubleshooting/install-errors/` answer 200 (title `Use ocx in a dev container | ocx Dev Container Feature`), the Pagefind entry is served and the hub page `https://ocx.sh/integrations/` lists "Dev Containers". `ocx-site check`, lychee (0 errors) and Lighthouse pass in the `docs` job of #24. The chain behind it, done under the widened grant: theme release [ocx-sh/website v0.7.0](https://github.com/ocx-sh/website/releases/tag/v0.7.0) ([ocx-sh/website#54](https://github.com/ocx-sh/website/pull/54), [ocx-sh/website#55](https://github.com/ocx-sh/website/pull/55)), conventions v0.3.6 ([ocx-sh/conventions#35](https://github.com/ocx-sh/conventions/pull/35), [ocx-sh/conventions#36](https://github.com/ocx-sh/conventions/pull/36)).
 - [x] "Docs quality" — planned with `docs-plan` (user needs, page inventory,
   coverage table), every page graded with `docs-review` with no MUST finding
   left, checks wired with `docs-instrument`. Every runnable example is backed
@@ -305,6 +308,25 @@ Each item is met only with evidence: the commit, command output, run URL or PR U
 - The hourly cron is throttled by GitHub: `ocx-sh/www-setup` has the same
   `17 * * * *` schedule and its runs arrive 4 to 8 hours apart. The dispatch
   from `www-setup` is the fast path; the poll is the safety net.
+- Owner message of 2026-11-17 widens the grant: merge the claim, release the
+  website (theme release tag), release the conventions and merge the
+  `www-setup` dispatch pull request. This lifts "never merge there" and "never
+  push the theme release tag" for these steps. The three repositories require
+  one approving review; with a single human account the merges use the
+  organisation-admin bypass of their rulesets.
+- The expired certificate on `https://ocx.sh/` was a local artefact: this
+  machine's `/etc/hosts` maps `ocx.sh` to itself. Through public DNS the site
+  answers 200 with a valid certificate. The hazard in the prompt file does not
+  apply to users.
+- The `/integrations/devcontainer/` claim made `section` the seventh value of
+  the root search filter. Pagefind UI keeps a lone filter open only up to six
+  values, so the filter rendered collapsed and the website deep tier failed
+  (`search.spec.ts:32`; green on v0.6.0). Fixed in the theme with
+  `openFilters: ['section']`
+  ([ocx-sh/website#55](https://github.com/ocx-sh/website/pull/55)) before the
+  v0.7.0 tag. Two unrelated flaky tests showed up on the way
+  (`deploy.test.ts` "keeps the phase order when some files are skipped",
+  e2e `motion-controls.spec.ts:56` and `sidebar-deferred.spec.ts:96`).
 
 ## Stop conditions
 
