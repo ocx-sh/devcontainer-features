@@ -79,6 +79,15 @@ aliases() {
     assert_output --partial "fail-unknown-version"
 }
 
+@test "no required task variable is named after a variable every shell exports" {
+    # Task reads such a variable from the environment, so a terminal run reports the login name as an invalid value instead of prompting.
+    bad=$(grep -h -E '^ +- name: (USER|HOME|PATH|SHELL|PWD|LOGNAME|LANG|TERM|USERNAME|HOSTNAME)$' taskfiles/*.yml taskfile.yml || true)
+    [ -z "$bad" ] || {
+        echo "required variable named like an exported one: $bad"
+        return 1
+    }
+}
+
 @test "every scenario in scenarios.json has a script, and every fail-* name has a message and an exit code" {
     for n in $(jq -r 'keys_unsorted[]' test/ocx/scenarios.json); do
         [ -x "test/ocx/$n.sh" ] || {
