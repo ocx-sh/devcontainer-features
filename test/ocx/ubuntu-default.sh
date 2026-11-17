@@ -5,7 +5,7 @@
 # The one-line feature on the Dev Containers Ubuntu image, the setup the quickstart and the guides show.
 # The commands below are the ones the docs print (doc keys qs-ocx-version, qs-add-tool, version-check,
 # restore-activation, how-install-files, ts-outside-consent-paths); test/docs/bindings.json binds them.
-# shellcheck disable=SC2329 # check calls the functions by name
+# shellcheck disable=SC2329,SC2016 # check calls the functions by name; the sh -c text is for the inner shell
 . "$(dirname "$0")/scenario.sh"
 
 check "ocx version prints the version the feature recorded" sh -c '[ "$(ocx version)" = "$(cat /usr/local/share/ocx-feature/ocx-version)" ]'
@@ -22,7 +22,7 @@ jq_runs() {
     case $out in jq-1.8*) ;; *) printf 'unexpected output: %s\n' "$out" && return 1 ;; esac
 }
 check "ocx exec -- jq --version prints jq-1.8" jq_runs
-check "~/.ocx belongs to the user who runs ocx" test "$(stat -c %U ~/.ocx)" = "$(id -un)"
+check "the .ocx directory in the home belongs to the user who runs ocx" test "$(stat -c %U ~/.ocx)" = "$(id -un)"
 
 # restore: a locked project is restored by the hook, and a new shell in it finds the tool
 new_project restore || true
