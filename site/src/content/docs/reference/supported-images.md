@@ -65,7 +65,7 @@ Two limits apply to images in the matrix or close to it.
 A plain `busybox` image has no package manager and no CA bundle.
 The build stops with exit code 2.
 
-```text
+```console
 ocx-feature: installing missing prerequisites: ca-bundle
 ocx-feature: error: missing: ca-bundle, and no supported package manager was found; install them in the base image
 ```
