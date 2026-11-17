@@ -1,0 +1,86 @@
+{
+  "id": "ocx",
+  "version": "1.0.0",
+  "name": "ocx",
+  "description": "Installs the ocx package manager and restores the project toolchain from ocx.toml.",
+  "documentationURL": "https://ocx.sh/integrations/devcontainer/",
+  "licenseURL": "https://github.com/ocx-sh/devcontainer-features/blob/main/LICENSE",
+  "keywords": ["ocx", "package manager", "toolchain", "oci"],
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "pinned",
+      "proposals": ["pinned", "latest"],
+      "description": "Which ocx to install. 'pinned' is the ocx version this feature release was tested with, 'latest' is the newest stable release at build time, or give an exact version such as 1.2.3."
+    },
+    "libc": {
+      "type": "string",
+      "default": "musl",
+      "enum": ["musl", "gnu", "auto"],
+      "description": "C library flavour of the ocx binary. 'musl' runs on every Linux image, 'gnu' needs glibc, 'auto' picks the one the image uses."
+    },
+    "distUrl": {
+      "type": "string",
+      "default": "",
+      "description": "HTTPS URL of a release manifest that replaces the bundled one. Empty uses the manifest shipped with this feature."
+    },
+    "mirrorUrl": {
+      "type": "string",
+      "default": "",
+      "description": "HTTPS base URL to download release archives from, for networks that cannot reach GitHub. Empty downloads from the official release location."
+    },
+    "caBundle": {
+      "type": "string",
+      "default": "",
+      "description": "Path inside the image to a PEM CA bundle. It is used for downloads at build time and by ocx at run time. Empty uses the system certificates."
+    },
+    "managedConfig": {
+      "type": "string",
+      "default": "",
+      "description": "OCI reference of an organisation-managed ocx configuration. Empty installs no managed configuration."
+    },
+    "ocxHome": {
+      "type": "string",
+      "default": "",
+      "description": "Sets OCX_HOME for all users. Empty keeps the default ~/.ocx for each user."
+    },
+    "installDir": {
+      "type": "string",
+      "default": "/usr/local/bin",
+      "description": "Directory that receives the ocx binary. It must be on PATH."
+    },
+    "noUpdateCheck": {
+      "type": "boolean",
+      "default": true,
+      "description": "Turn off the ocx update check, so the container makes no network call just to look for a new ocx."
+    },
+    "consentPaths": {
+      "type": "string",
+      "default": "/workspaces/*",
+      "description": "Colon-separated paths whose projects activate without a prompt. Empty means every project asks first."
+    },
+    "pull": {
+      "type": "boolean",
+      "default": true,
+      "description": "Restore the project toolchain from ocx.toml when the container is created."
+    },
+    "pullGroups": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated tool groups to restore. Empty restores the default group only."
+    },
+    "shellActivation": {
+      "type": "boolean",
+      "default": true,
+      "description": "Put the project toolchain on PATH in new shells."
+    }
+  },
+  "installsAfter": ["ghcr.io/devcontainers/features/common-utils"],
+  "customizations": {
+    "vscode": {
+      "extensions": ["ocx-sh.ocx"]
+    }
+  },
+  "onCreateCommand": "/usr/local/share/ocx-feature/hook.sh on-create",
+  "updateContentCommand": "/usr/local/share/ocx-feature/hook.sh update-content"
+}
