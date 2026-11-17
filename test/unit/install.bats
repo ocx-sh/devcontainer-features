@@ -462,6 +462,22 @@ Show server response'
     assert_output --partial "escaping link"
 }
 
+@test "a chained link archive never writes outside the extraction directory" {
+    cd "$SANDBOX/fx"
+    rm -rf ch && mkdir -p ch/ocx-$MUSL/sub
+    ln -s sub ch/ocx-$MUSL/l1
+    ln -s l1/.. ch/ocx-$MUSL/l2
+    ln -s l2/l2/l2 ch/ocx-$MUSL/l3
+    printf x >ch/ocx-$MUSL/sub/f
+    tar -czf arc/$V-$MUSL.tgz -C ch ocx-$MUSL
+    mkdist
+    inst
+    assert_failure 5
+    [ ! -e "$SANDBOX/escape" ] && [ ! -e "$SANDBOX/fx/escape" ]
+    run find "$SANDBOX" -newer "$SANDBOX/fx/arc/$V-$MUSL.tgz" -type f -name escape
+    assert_output ""
+}
+
 @test "escaping hard link in the archive exits 5" {
     cd "$SANDBOX/fx"
     mkdir -p hl && echo x >hl/a && ln hl/a hl/b
