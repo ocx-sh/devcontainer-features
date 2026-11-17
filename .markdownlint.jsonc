@@ -1,0 +1,19 @@
+{
+  // The docs-quality set's own config, plus the adopter overrides below. Run: task site:docs (pnpm exec markdownlint).
+  "extends": ".claude/rules/docs-quality/checks/markdownlint.jsonc",
+
+  // The pages hold one sentence per line, so line length is not a rule here.
+  "MD013": false,
+
+  // Console fences show the prompt on purpose, also for a command with no output.
+  "MD014": false,
+
+  // Headings carry explicit {#id} anchors that markdownlint cannot see; lychee checks every fragment in the built site.
+  "MD051": false,
+
+  // The project's fence tier list (DOC-EX-05): the extended list names the languages the pages use.
+  "MD040": {
+    "allowed_languages": ["bash", "console", "dockerfile", "json", "jsonc", "sh", "toml", "yaml"],
+    "language_only": true
+  }
+}

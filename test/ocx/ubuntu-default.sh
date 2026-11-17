@@ -38,18 +38,19 @@ activated() {
 check "bash -ic 'command -v jq' in the project resolves jq from the project toolchain" activated
 
 # trust model: a project outside consentPaths (the default /workspaces/*) does not activate, ocx exec still works
+# (shfmt, because the Ubuntu image already ships jq)
 outside=$(mktemp -d /tmp/ocx-outside.XXXXXX)
-cp "$proj/ocx.toml" "$proj/ocx.lock" "$outside/"
-(cd "$outside" && ocx pull >/dev/null 2>&1)
+printf '[tools]\nshfmt = "ocx.sh/shfmt/shfmt:3.13.1"\n' >"$outside/ocx.toml"
+(cd "$outside" && ocx lock >/dev/null 2>&1 && ocx pull >/dev/null 2>&1)
 not_activated() {
-    out=$(cd "$outside" && bash -ic 'jq --version' 2>&1 | grep -v -e 'cannot set terminal process group' -e 'no job control')
+    out=$(cd "$outside" && bash -ic 'shfmt --version' 2>&1 | grep -v -e 'cannot set terminal process group' -e 'no job control')
     case $out in
-        *'bash: jq: command not found'*) ;;
+        *'bash: shfmt: command not found'*) ;;
         *) printf 'a shell outside consentPaths printed: %s\n' "$out" && return 1 ;;
     esac
 }
-check "outside consentPaths a new shell prints bash: jq: command not found" not_activated
-check "outside consentPaths ocx exec still runs the tool" sh -c "cd '$outside' && ocx exec -- jq --version"
+check "outside consentPaths a new shell prints bash: shfmt: command not found" not_activated
+check "outside consentPaths ocx exec still runs the tool" sh -c "cd '$outside' && ocx exec -- shfmt --version"
 rm -rf "$outside"
 
 finish

@@ -42,7 +42,7 @@ tasks:
       - task: test:image
         vars: {IMAGE: alpine}
       - task: test:scenarios
-        vars: {SCENARIO: user-existing user-created-later hook-no-lock fail-libc-gnu-alpine}
+        vars: {SCENARIO: user-existing user-created-later hook-no-lock fail-libc-gnu-alpine ubuntu-default fail-version-too-old fail-invalid-libc}
       - task: release:rehearse
 
   ci:build:
