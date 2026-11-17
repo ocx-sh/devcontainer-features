@@ -1,8 +1,16 @@
 {
   "schema": 1,
-  "latest": {"version":"0.6.7","channel":"stable"},
+  "latest": {"version":"0.6.8","channel":"stable"},
   "latest_next": null,
   "releases": [
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"aarch64-apple-darwin","filename":"ocx-aarch64-apple-darwin.tar.gz","sha256":"9ae2d8d0f8246e5671c9bce86270baa23dc178d917c326c59d34ba36208d0d8b","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-aarch64-apple-darwin.tar.gz"},
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"aarch64-pc-windows-gnullvm","filename":"ocx-aarch64-pc-windows-gnullvm.zip","sha256":"d8196c8501b6edc78a05dd1e50d5349a317a3af75040375ab8e23654d617f503","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-aarch64-pc-windows-gnullvm.zip"},
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"aarch64-unknown-linux-gnu","filename":"ocx-aarch64-unknown-linux-gnu.tar.gz","sha256":"caa0a87fcf39f98a832c4e3c3ba2d6cd6e6b515323a26dc2713585ef152df045","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-aarch64-unknown-linux-gnu.tar.gz"},
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"aarch64-unknown-linux-musl","filename":"ocx-aarch64-unknown-linux-musl.tar.gz","sha256":"94c5d036991d33a5b765d89f798881db3a898fcfb00b80f656822ea1e7d70173","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-aarch64-unknown-linux-musl.tar.gz"},
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"x86_64-apple-darwin","filename":"ocx-x86_64-apple-darwin.tar.gz","sha256":"89cbbf686a6af1297b13ceec8ef39078cb191ff0191fbac2ee14a44b9b77f91a","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-x86_64-apple-darwin.tar.gz"},
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"x86_64-pc-windows-gnullvm","filename":"ocx-x86_64-pc-windows-gnullvm.zip","sha256":"e4535b11f5c9b16680bf365e41e1c15e98905110289092fcb80304dbb0a83626","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-x86_64-pc-windows-gnullvm.zip"},
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"x86_64-unknown-linux-gnu","filename":"ocx-x86_64-unknown-linux-gnu.tar.gz","sha256":"0f5a29f423b0f242b9f8af740fedce6411cc2259160ba7b7ff23013d0a67a0b7","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-x86_64-unknown-linux-gnu.tar.gz"},
+    {"version":"0.6.8","channel":"stable","tag":"v0.6.8","target":"x86_64-unknown-linux-musl","filename":"ocx-x86_64-unknown-linux-musl.tar.gz","sha256":"96ddbd85be99542fcc3f73023103b8c0fcabe8d041a4f7e8abac697eba57d40f","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.8/ocx-x86_64-unknown-linux-musl.tar.gz"},
     {"version":"0.6.7","channel":"stable","tag":"v0.6.7","target":"aarch64-apple-darwin","filename":"ocx-aarch64-apple-darwin.tar.gz","sha256":"45909461d9d26ad887325503d74658fa7b659a44b204f383cbc0557a859c06b5","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.7/ocx-aarch64-apple-darwin.tar.gz"},
     {"version":"0.6.7","channel":"stable","tag":"v0.6.7","target":"aarch64-pc-windows-gnullvm","filename":"ocx-aarch64-pc-windows-gnullvm.zip","sha256":"194a4c7328508420006233838a3d4156b7f12cef04a12396540ceaa93a6089da","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.7/ocx-aarch64-pc-windows-gnullvm.zip"},
     {"version":"0.6.7","channel":"stable","tag":"v0.6.7","target":"aarch64-unknown-linux-gnu","filename":"ocx-aarch64-unknown-linux-gnu.tar.gz","sha256":"016d15df5546a2315ecd579c53c769e840eb9e058104d5c06c816fee6f651567","url":"https://github.com/ocx-sh/ocx/releases/download/v0.6.7/ocx-aarch64-unknown-linux-gnu.tar.gz"},
@@ -301,4 +309,3 @@
     {"version":"0.1.0","channel":"stable","tag":"v0.1.0","target":"x86_64-unknown-linux-musl","filename":"ocx-x86_64-unknown-linux-musl.tar.xz","sha256":"01cfdbd80bd7cf3c180e02e816b1b0b3a4914de78a9fd238b8250e0180686489","url":"https://github.com/ocx-sh/ocx/releases/download/v0.1.0/ocx-x86_64-unknown-linux-musl.tar.xz"}
   ]
 }
-

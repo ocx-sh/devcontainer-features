@@ -1,6 +1,6 @@
 {
   "id": "ocx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "ocx",
   "description": "Installs the ocx package manager and restores the project toolchain from ocx.toml.",
   "documentationURL": "https://ocx.sh/integrations/devcontainer/",

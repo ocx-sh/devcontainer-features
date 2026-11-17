@@ -8,6 +8,10 @@ description: Every release of the ocx Dev Container Feature with the ocx version
 
 Releases of the ocx dev container feature, newest first. Each feature version pins one ocx version.
 
+## 1.0.1 - 2026-11-17
+
+- ocx 0.6.8 (was 0.6.7)
+
 ## 1.0.0 - 2026-11-17
 
 - ocx 0.6.8
