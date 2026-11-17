@@ -211,5 +211,83 @@
     "features": {
       "ocx": {}
     }
+  },
+  "ubuntu-default": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "user-remote-root": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "remoteUser": "root",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "user-remote-vscode": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "remoteUser": "vscode",
+    "features": {
+      "ocx": {}
+    }
+  },
+  "restore-groups": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "ocx": {
+        "pullGroups": "default,ci"
+      }
+    }
+  },
+  "prebuild": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "ocx": {
+        "pull": true,
+        "noUpdateCheck": true
+      }
+    }
+  },
+  "managed-config-env": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "containerEnv": {
+      "OCX_MANAGED_CONFIG": "localhost:9/acme/fleet:1"
+    },
+    "features": {
+      "ocx": {}
+    }
+  },
+  "offline-run": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "containerEnv": {
+      "OCX_OFFLINE": "1"
+    },
+    "features": {
+      "ocx": {}
+    }
+  },
+  "consent-narrow": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "remoteUser": "root",
+    "features": {
+      "ocx": {
+        "consentPaths": "/workspaces/app"
+      }
+    }
+  },
+  "consent-added": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "ocx": {
+        "consentPaths": "/workspaces/*:/tmp/proj"
+      }
+    }
+  },
+  "lock-glibc-only": {
+    "image": "alpine:3",
+    "features": {
+      "ocx": {}
+    }
   }
 }

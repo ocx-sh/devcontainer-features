@@ -11,22 +11,47 @@
     "exit": 2,
     "message": "option version must be pinned, latest or X.Y.Z (got: 1.2)"
   },
+  "fail-invalid-libc": {
+    "image": "debian:stable-slim",
+    "options": { "libc": "glibc" },
+    "exit": 2,
+    "message": "option libc must be musl, gnu or auto (got: glibc)"
+  },
   "fail-unknown-version": {
     "image": "debian:stable-slim",
     "options": { "version": "9.9.9" },
     "exit": 2,
-    "message": "no ocx 9.9.9 build for"
+    "message": "no ocx 9.9.9 build for",
+    "also": [" in the release manifest (newest available: ", "); set version: latest or distUrl to a manifest that has it"]
+  },
+  "fail-version-too-old": {
+    "image": "debian:stable-slim",
+    "options": { "version": "0.4.2" },
+    "exit": 2,
+    "message": "ocx 0.4.2 ships as ocx-",
+    "also": ["; this feature installs .tar.gz releases only. The oldest ", " .tar.gz build is 0.4.3: set version to 0.4.3 or newer"]
   },
   "fail-libc-gnu-alpine": {
     "image": "alpine:3",
     "options": { "libc": "gnu" },
     "exit": 7,
-    "message": "libc: gnu needs glibc 2.28 or newer, which this image does not have"
+    "message": "libc: gnu needs glibc 2.28 or newer, which this image does not have; use libc: musl or auto"
   },
   "fail-ca-bundle-missing": {
     "image": "debian:stable-slim",
     "options": { "caBundle": "/no/such/bundle.pem" },
     "exit": 2,
     "message": "option caBundle is not a readable file: /no/such/bundle.pem"
+  },
+  "fail-mirror-dead": {
+    "image": "debian:stable-slim",
+    "options": { "mirrorUrl": "https://github.com/ocx-sh/no-such-mirror" },
+    "exit": 3,
+    "message": "failed to download https://github.com/ocx-sh/no-such-mirror/v",
+    "also": [
+      "ocx-feature: download failed (attempt 1/3), retrying in 1s",
+      "ocx-feature: download failed (attempt 2/3), retrying in 2s",
+      "  Check the network, or use the mirrorUrl option."
+    ]
   }
 }
