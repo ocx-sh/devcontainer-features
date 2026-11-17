@@ -96,7 +96,7 @@ printf '[tools]\njq = "ocx.sh/jqlang/jq:1.8"\n' >"$dir/ocx.toml"
     exit 1
 }
 # The workspace is a bind mount of the host user's files; a root hook refuses a project owned by
-# another user, so for USER=root the sample project is visible but not restored.
+# another user, so for RUN_AS=root the sample project is visible but not restored.
 
 DC=${OCXF_DEVCONTAINER:-pnpm exec devcontainer}
 # shellcheck disable=SC2086 # DC is a command line of several words on purpose

@@ -38,7 +38,7 @@ tasks:
       - "JOBS={{.JOBS}} {{.IMAGES_OCX}} sh test/images/run-scenarios.sh {{.SCENARIO}}"
 
   run:
-    desc: "A throwaway dev container with the local feature and a sample project, a login shell as USER (CMD='...' runs a command instead). Removed on exit; OPTIONS='{\"version\":\"latest\"}' sets feature options"
+    desc: "A throwaway dev container with the local feature and a sample project, a login shell as RUN_AS (CMD='...' runs a command instead). Removed on exit; OPTIONS='{\"version\":\"latest\"}' sets feature options"
     interactive: true
     # CLI variables are not environment variables, so the two optional ones are handed over here.
     env:
@@ -49,8 +49,9 @@ tasks:
         # IMAGE: keep in step with test:image (test/unit/images.bats fails when they differ).
         - name: IMAGE
           enum: [debian, ubuntu, alpine, fedora, rocky, alma, ubi-minimal, amazonlinux, opensuse, arch, wolfi, busybox, devcontainers-ubuntu, devcontainers-debian, devcontainers-alpine]
-        - name: USER
+        # Not USER: every shell exports it, so Task would read the login name and report it invalid.
+        - name: RUN_AS
           enum: [root, vscode, node]
     cmds:
       - "{{.IMAGES_OCX}} pnpm install --frozen-lockfile"
-      - "{{.IMAGES_OCX}} sh test/images/run-workspace.sh {{.IMAGE}} {{.USER}}"
+      - "{{.IMAGES_OCX}} sh test/images/run-workspace.sh {{.IMAGE}} {{.RUN_AS}}"
