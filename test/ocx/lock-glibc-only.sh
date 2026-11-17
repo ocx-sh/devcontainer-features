@@ -4,7 +4,7 @@
 
 # A package that ships glibc builds only (node) cannot be locked on a musl image: ocx lock exits 78 and
 # names the missing platform (troubleshooting/restore-warnings).
-# shellcheck disable=SC2329 # check calls the functions by name
+# shellcheck disable=SC2329,SC2016 # check calls the functions by name; the backticks are text of ocx's message, not command substitution
 . "$(dirname "$0")/scenario.sh"
 
 proj=$workspace/glibc-only-$$

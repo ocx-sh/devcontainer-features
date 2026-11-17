@@ -4,7 +4,7 @@
 
 # Hook with ocx.toml and no ocx.lock: container creation must not fail (exit 0) and the user gets
 # exactly one warning that names exit 78 and the fix, `ocx lock`.
-# shellcheck disable=SC2329 # check calls the functions by name
+# shellcheck disable=SC2329,SC2016 # check calls the functions by name; the backticks are text of ocx's message, not command substitution
 . "$(dirname "$0")/scenario.sh"
 
 proj=$workspace/no-lock-$$
