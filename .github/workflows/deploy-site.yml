@@ -32,14 +32,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup
-        uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
+        uses: ocx-sh/conventions/.github/actions/setup@739ab847fceeaee243680b0d634276f081ed221e # v0.3.6
         with:
           groups: default,docs
       - name: Build the site
         run: task ci:docs
       - name: Deploy
         id: deploy
-        uses: ocx-sh/website/.github/actions/deploy@e86b83014538975c186912e5038567c69b2f2f2c # v0.3.0
+        uses: ocx-sh/website/.github/actions/deploy@37ada9d815fba073a3cb50e31c8b1af6e43258e5 # v0.7.0
         with:
           dist: "site/dist"
           path: "/integrations/devcontainer/"
