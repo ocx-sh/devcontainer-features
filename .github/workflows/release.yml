@@ -1,0 +1,185 @@
+# Repo-owned workflow (not template-managed; the baseline copy lists repo_workflows: false and skips it).
+# Unattended release: a new ocx manifest at setup.ocx.sh becomes a tested, published feature version.
+# detect (seconds, hourly) -> prepare (vendor + bump + README + changelog) -> test (full gate, both arches)
+# -> publish (commit, tag, ghcr.io, verify). A failure opens one release-blocked issue; nothing is half-published.
+# GITHUB_TOKEN pushes never trigger other workflows, so test and publish run in this same run.
+name: release
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  repository_dispatch:
+    # Sent by ocx-sh/www-setup after it publishes a manifest. The payload is only a wake-up: the run re-fetches.
+    types: [dist-updated]
+  workflow_dispatch:
+    inputs:
+      publish_current:
+        description: Publish the feature version already in devcontainer-feature.json even when the manifest is unchanged (first publish, feature-only release)
+        type: boolean
+        default: false
+      dry_run:
+        description: Do everything except commit, push, tag and publish
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    # Only the default branch releases; a dispatch from another branch ends here.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.detect.outputs.run }}
+      changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: detect
+        env:
+          PUBLISH_CURRENT: ${{ inputs.publish_current }}
+          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
+          PAYLOAD_SHA256: ${{ github.event.client_payload.sha256 }}
+          PAYLOAD_URL: ${{ github.event.client_payload.url }}
+        run: sh scripts/release/detect.sh
+
+  prepare:
+    needs: detect
+    if: needs.detect.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      feature_version: ${{ steps.prepare.outputs.feature_version }}
+      ocx_version: ${{ steps.prepare.outputs.ocx_version }}
+      old_ocx_version: ${{ steps.prepare.outputs.old_ocx_version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
+        with:
+          groups: default
+          otel-auth: ${{ secrets.OTEL_OTLP_AUTH }}
+      - run: ocx exec -g default -- pnpm install --frozen-lockfile
+      - id: prepare
+        env:
+          CHANGED: ${{ needs.detect.outputs.changed }}
+        run: ocx exec -g default -- pnpm exec sh scripts/release/prepare.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-tree
+          path: release-tree
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true # a rerun uploads the same name again
+
+  test:
+    needs: prepare
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-tree
+          path: release-tree
+      - name: Apply the release tree
+        run: |
+          if [ -s release-tree/tree.patch ]; then git apply --index release-tree/tree.patch; fi
+      - uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
+        with:
+          groups: ${{ matrix.os == 'ubuntu-latest' && 'default,lint,test' || 'default,test' }}
+          otel-auth: ${{ secrets.OTEL_OTLP_AUTH }}
+      - name: Lint (one arch is enough)
+        if: matrix.os == 'ubuntu-latest'
+        run: task ci:lint
+      - run: task ci:test
+      - run: task ci:deep
+      - name: Push JUnit telemetry
+        if: always()
+        uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
+        with:
+          report: target/reports/junit/*.xml
+          otel-auth: ${{ secrets.OTEL_OTLP_AUTH }}
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: junit-${{ matrix.os }}
+          path: target/reports/junit
+          if-no-files-found: ignore
+
+  publish:
+    needs: [detect, prepare, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The push authenticates with a header scoped to publish.sh, not with credentials left in .git.
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-tree
+          path: release-tree
+      - name: Apply the release tree
+        run: |
+          if [ -s release-tree/tree.patch ]; then git apply --index release-tree/tree.patch; fi
+      - uses: ocx-sh/conventions/.github/actions/setup@fe887c6c8af73e8f5ce3f80f7bd807e06f846371 # v0.3.5
+        with:
+          groups: default
+          otel-auth: ${{ secrets.OTEL_OTLP_AUTH }}
+      - run: ocx exec -g default -- pnpm install --frozen-lockfile
+      - name: Commit, tag, publish, verify
+        env:
+          FEATURE_VERSION: ${{ needs.prepare.outputs.feature_version }}
+          OCX_VERSION: ${{ needs.prepare.outputs.ocx_version }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: ocx exec -g default -- pnpm exec sh scripts/release/publish.sh
+
+  report:
+    needs: [detect, prepare, test, publish]
+    if: always() && needs.detect.result == 'success' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Open, update or close the release-blocked issue
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          OCX_VERSION: ${{ needs.prepare.outputs.ocx_version }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: sh scripts/release/report.sh
