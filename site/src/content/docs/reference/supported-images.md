@@ -20,15 +20,15 @@ A platform in the last column means the image is published for that architecture
 | `debian` | `debian:stable-slim` | amd64 and arm64 |
 | `ubuntu` | `ubuntu:24.04` | amd64 and arm64 |
 | `alpine` | `alpine:3` | amd64 and arm64 |
-| `fedora` | `fedora` | amd64 and arm64 |
+| `fedora` | `fedora:45` | amd64 and arm64 |
 | `rocky` | `rockylinux:9-minimal` | amd64 and arm64 |
 | `alma` | `almalinux:9` | amd64 and arm64 |
 | `ubi-minimal` | `registry.access.redhat.com/ubi9/ubi-minimal` | amd64 and arm64 |
 | `amazonlinux` | `amazonlinux:2023` | amd64 and arm64 |
 | `opensuse` | `opensuse/leap:15` | amd64 and arm64 |
-| `arch` | `archlinux` | amd64 only |
+| `arch` | `archlinux:latest` | amd64 only |
 | `wolfi` | `cgr.dev/chainguard/wolfi-base` | amd64 and arm64 |
-| `busybox` | `busybox:musl` | amd64 and arm64 |
+| `busybox` | `ocx-test/busybox-ca:local` | amd64 and arm64 |
 | `devcontainers-ubuntu` | `mcr.microsoft.com/devcontainers/base:ubuntu` | amd64 and arm64 |
 | `devcontainers-debian` | `mcr.microsoft.com/devcontainers/base:debian` | amd64 and arm64 |
 | `devcontainers-alpine` | `mcr.microsoft.com/devcontainers/base:alpine` | amd64 and arm64 |
