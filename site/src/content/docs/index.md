@@ -33,12 +33,20 @@ The tag `:1` keeps the feature on major version 1, so a rebuild takes minor and 
 - [Restore the project toolchain when the container is created](guides/restore-toolchain.md)
 - [Run ocx as root, a named user or a split user](guides/non-root-and-custom-users.md)
 - [Use ocx on Alpine and other minimal images](guides/minimal-images.md)
+- [Build behind a proxy and a custom CA](integrate/proxy-and-custom-ca.md)
+- [Install from a mirror or with no internet](integrate/mirror-and-air-gapped.md)
+- [Apply organisation-managed configuration](integrate/managed-config.md)
+- [Prebuild the container in Codespaces and CI](integrate/codespaces-and-prebuilds.md)
+- [Fix a failed feature install](troubleshooting/install-errors.md), [a rejected option](troubleshooting/install-option-errors.md), [a lock or permission error](troubleshooting/container-errors.md), [a tool missing from the terminal](troubleshooting/shell-activation-errors.md) or [a restore warning](troubleshooting/restore-warnings.md)
 
 ## Look it up {#look-it-up}
 
 - [Supported images](reference/supported-images.md) lists the base images and architectures the feature installs on
 - [Options](reference/options.md) describes every option and its default
+- [Files, environment and exit codes](reference/environment-and-files.md) lists what the feature writes and what each exit code means
+- [Installer variables and feature options](reference/installer-parity.md) maps the official install script to the options
 - [How the install works](concepts/how-the-install-works.md) explains what the build does
+- [What the feature trusts](concepts/trust-model.md) explains the defaults that activate projects and fetch the manifest
 - [Changelog](changelog.md) lists the feature releases and the ocx version each one pins
 - [Source and issues](https://github.com/ocx-sh/devcontainer-features) for the feature on GitHub
 - [The ocx project](https://github.com/ocx-sh/ocx) for the package manager the feature installs

@@ -68,7 +68,8 @@ jq = "ocx.sh/jqlang/jq:1.8"
 ```
 
 The command `ocx exec -- <command>` always finds the project tools.
-A terminal that starts after the add also has them on its path, so `jq` runs without the prefix there.
+A terminal that starts after the add inside a project under `/workspaces` also has them on its path, so `jq` runs without the prefix there.
+That default comes from the [`consentPaths`](reference/options.md#opt-consentPaths) option.
 
 ## Commit the project files {#commit}
 
@@ -83,3 +84,7 @@ The `.ocx/toolchain` folder holds its own `.gitignore`, so it stays out of your 
 - [Run ocx as root, a named user or a split user](guides/non-root-and-custom-users.md) explains the user setups.
 - [Use ocx on a minimal base image](guides/minimal-images.md) covers Alpine and other small images.
 - [Options](reference/options.md) describes every feature option.
+- [What the feature trusts](concepts/trust-model.md) explains the defaults, so read it before you open repositories that are not yours.
+- [Build behind a proxy and a custom CA](integrate/proxy-and-custom-ca.md) covers networks with a proxy or a company certificate.
+- [Fix a failed feature install](troubleshooting/install-errors.md) matches a build error to its fix.
+- [Fix a tool missing from the terminal](troubleshooting/shell-activation-errors.md) covers a tool that is not on `PATH`.

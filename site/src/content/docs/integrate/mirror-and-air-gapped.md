@@ -49,8 +49,8 @@ Serve both architectures if developers use Apple silicon machines.
 
 Set [`mirrorUrl`](../reference/options.md#opt-mirrorUrl) to the base URL:
 
+<!-- doc: mirror-url -->
 ```jsonc
-// doc: mirror-url
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -90,8 +90,8 @@ The `url` of each row is the archive location, and `mirrorUrl` replaces it when 
 With `version: "pinned"` or `"latest"` the feature takes the first stable release the manifest lists. A value such as `"0.6.8"` selects that row.
 Name the manifest after its own SHA-256 digest, and the build verifies it:
 
+<!-- doc: dist-url -->
 ```jsonc
-// doc: dist-url
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -103,7 +103,9 @@ Name the manifest after its own SHA-256 digest, and the build verifies it:
 ```
 
 A file name of 64 hexadecimal digits plus `.json` pins the manifest to that digest.
-A manifest under any other name, such as `dist.json`, installs without a digest check, so it is as trusted as the connection that delivers it.
+A manifest under any other name, such as `dist.json`, installs without a digest check, so it is as trusted as the HTTPS endpoint that serves it.
+Where the supply chain matters, use the digest name.
+The build also refuses a manifest with a backslash or a repeated key in one row, with exit code 4 and the message `release manifest is not in the expected plain form`.
 A pinned name whose digest does not match fails with exit code 4:
 
 ```console
@@ -121,8 +123,8 @@ After the image is built, the container itself can run without a network when th
 
 Set `OCX_OFFLINE=1` in `containerEnv` to stop `ocx` from contacting any registry:
 
+<!-- doc: offline-run -->
 ```jsonc
-// doc: offline-run
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -148,7 +150,8 @@ A store is warm once `ocx pull` has run in it, so fill it before the network goe
 ## Know what stays verified {#verified}
 
 - The release archive is always checked against a SHA-256 digest from the manifest, on every mirror.
-- The bundled manifest is checked against a digest recorded in the feature, and a mismatch stops the build.
+- The bundled manifest is checked against a digest recorded in the feature. That check detects corruption only, because both travel in the same package.
+- Every download uses HTTPS and refuses a redirect to a URL that is not HTTPS, and a stalled connection ends the attempt.
 - A manifest named `<sha256>.json` is checked against its own name. Any other manifest name is not checked.
 - With `version: "latest"` or an unpinned `distUrl`, BusyBox `wget` cannot validate TLS, and the feature then refuses the manifest. Install `curl` or use a pinned name.
 
@@ -158,5 +161,7 @@ Tool packages come from the registries in `ocx.toml`, and this feature does not 
 ## Next steps {#next-steps}
 
 - [How the install works](../concepts/how-the-install-works.md#verification) explains the checksum check in detail.
+- [What the feature trusts](../concepts/trust-model.md#install) says which options depend on a web endpoint.
+- [Options](../reference/options.md#opt-mirrorUrl) describes `mirrorUrl` and `distUrl`.
 - [Build behind a proxy and a custom CA](./proxy-and-custom-ca.md) for a network that allows GitHub only through a proxy.
 - [Fix a failed feature install](../troubleshooting/install-errors.md) when the build stops with exit code 3 or 4.

@@ -1,6 +1,8 @@
 ---
 title: Pin or upgrade the ocx version
 description: Choose which ocx version the feature installs, with the default pin, an exact version, the current release or a frozen feature tag.
+sidebar:
+  order: 1
 ---
 <!-- doc_type: how-to -->
 <!-- doc_tier: everyday -->
@@ -56,6 +58,14 @@ A value that is not `pinned`, `latest` or three dot-separated numbers also fails
 For example, `banana` stops with `option version must be pinned, latest or X.Y.Z (got: banana)`.
 To install a version that the bundled manifest lacks, point `distUrl` at a manifest that lists it.
 
+The feature installs `.tar.gz` releases only, so the oldest installable ocx version is 0.4.3 on x86_64 with musl.
+An older version such as `0.4.2` stops the build with exit code 2 before any download, and the message names the oldest version for your platform.
+
+<!-- doc: version-too-old -->
+```console
+ocx-feature: error: ocx 0.4.2 ships as ocx-x86_64-unknown-linux-musl.tar.xz; this feature installs .tar.gz releases only. The oldest x86_64-unknown-linux-musl .tar.gz build is 0.4.3: set version to 0.4.3 or newer
+```
+
 ## Follow the current release {#latest}
 
 Set `version` to `latest`.
@@ -75,11 +85,14 @@ That read needs network access at build time, and two builds on different days c
 ```
 
 If the manifest cannot be fetched, the build stops with exit code 3.
+This option trusts the HTTPS endpoint that serves the manifest, while the default pin verifies the archive against a checksum bundled in the feature.
+[What the feature trusts](../concepts/trust-model.md#install) explains the difference.
 
 ## Pin the feature tag {#feature-tag}
 
 The feature tag decides which feature release, and so which default ocx version, a rebuild gets.
 A full tag freezes the feature and the ocx version it pins.
+To freeze it by content instead, reference the feature by digest as `ocx@sha256:<digest>`.
 
 <!-- doc-norun: tag resolution belongs to the Dev Containers tooling, and the tags exist only after publication -->
 ```jsonc
@@ -122,3 +135,5 @@ Both commands print the same version, for example `0.6.7` after the exact pin ab
 - [Add ocx to a dev container](../quickstart.md) is the first-run walk-through.
 - [Use ocx on a minimal base image](minimal-images.md) covers images without the usual tools.
 - [Changelog](../changelog.md) lists the ocx version each feature release pins.
+- [Options](../reference/options.md#opt-version) describes `version` and every other option.
+- [Fix a rejected option or version](../troubleshooting/install-option-errors.md) matches each version error to its fix.

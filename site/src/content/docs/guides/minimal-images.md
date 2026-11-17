@@ -1,6 +1,8 @@
 ---
 title: Use ocx on a minimal base image
 description: Install ocx on Alpine, Debian slim, Red Hat minimal and Wolfi images, choose the libc build and move the binary to another directory.
+sidebar:
+  order: 4
 ---
 <!-- doc_type: how-to -->
 <!-- doc_tier: everyday -->
@@ -21,6 +23,7 @@ The install runs as root at image build and needs these tools:
 The [supported images](../reference/supported-images.md) page lists the tested bases.
 The feature installs whatever is missing through the package manager of the image.
 It supports `apt-get`, `apk`, `dnf`, `microdnf`, `yum`, `zypper` and `pacman`.
+On Arch it runs `pacman -Syu --needed`, which upgrades the image's packages as part of the install.
 It prints one line that names the missing tools.
 
 ```console
@@ -112,7 +115,8 @@ On Wolfi, ocx itself does not detect glibc.
 Install a glibc-only package there with `--platform linux/<arch>+libc.glibc`.
 
 A bare `busybox` image has no package manager and no CA bundle.
-Point the `caBundle` option at a PEM file that you copy into the image, and install the other tools yourself.
+Point the [`caBundle` option](../reference/options.md#opt-caBundle) at a PEM file that you copy into the image, and install the other tools yourself.
+[Build behind a proxy and a custom CA](../integrate/proxy-and-custom-ca.md#ca-build) shows the `COPY` line.
 
 ## Choose the libc build {#libc}
 
@@ -166,3 +170,4 @@ The binary then runs only through its full path, `/opt/ocx/bin/ocx version`.
 - [Add ocx to a dev container](../quickstart.md) is the first-run walk-through.
 - [Pin or upgrade the ocx version](pin-or-upgrade-version.md) sets the ocx version on any image.
 - [Supported images](../reference/supported-images.md) covers the unsupported cases, including bare BusyBox.
+- [Fix a failed feature install](../troubleshooting/install-errors.md#missing-prerequisite) matches the missing-tool message to its fix.

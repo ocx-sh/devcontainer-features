@@ -31,8 +31,8 @@ When the container runs, `ocx pull` fetches the tools in `ocx.toml` from the reg
 The install script sets no proxy of its own. It calls `curl`, which reads the proxy variables from the build environment.
 Pass them as build arguments in a `devcontainer.json` that builds from a Dockerfile:
 
+<!-- doc: proxy-build-args -->
 ```jsonc
-// doc: proxy-build-args
 {
   "build": {
     "dockerfile": "Dockerfile",
@@ -53,7 +53,8 @@ The `Dockerfile` here holds one line, such as `FROM mcr.microsoft.com/devcontain
 ## Trust the company CA during the build {#ca-build}
 
 A proxy that inspects TLS answers with a certificate signed by your company root.
-The download then fails with this line, repeated on each of the three attempts:
+The download then fails with this line, repeated on each of the three attempts.
+A connection that never opens or stalls ends the attempt after 30 to 60 seconds, so a blocked host fails fast.
 
 ```console
 curl: (60) SSL certificate OpenSSL verify result: unable to get local issuer certificate (20)
@@ -70,8 +71,8 @@ COPY corp-ca.pem /usr/local/share/ca-certificates/corp-ca.pem
 
 Then name the copied path in the option:
 
+<!-- doc: ca-bundle -->
 ```jsonc
-// doc: ca-bundle
 {
   "build": { "dockerfile": "Dockerfile" },
   "features": {
@@ -116,8 +117,8 @@ At run time `ocx` reads the standard proxy variables: `HTTPS_PROXY`, `HTTP_PROXY
 There is no ocx-specific proxy setting.
 The build arguments above do not reach the running container, so set the variables in `containerEnv`:
 
+<!-- doc: proxy-runtime-env -->
 ```jsonc
-// doc: proxy-runtime-env
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
@@ -147,9 +148,10 @@ shellcheck  default  sha256:3981b442fff3f6bf9ae93e4c293e53322ffc9135e0b654620bc8
 ```
 
 The access log of the proxy shows a `CONNECT` line for each host the build and the restore reached.
-If a step fails, see [Fix a failed feature install](../troubleshooting/install-errors.md) and [Fix a missing tool or failed restore](../troubleshooting/container-errors.md).
+If a step fails, see [Fix a failed feature install](../troubleshooting/install-errors.md) and [Fix a lock or permission error](../troubleshooting/container-errors.md).
 
 ## Next steps {#next-steps}
 
 - [Install from a mirror or with no internet](./mirror-and-air-gapped.md) for a network that cannot reach GitHub at all.
 - [Apply organisation-managed configuration](./managed-config.md) to roll these settings out to every container.
+- [Options](../reference/options.md#opt-caBundle) describes `caBundle` and the other options used here.
