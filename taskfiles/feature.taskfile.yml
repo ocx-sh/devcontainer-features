@@ -16,7 +16,7 @@ tasks:
     cmds:
       - cmd: "{{.LINT_OCX}} sh scripts/lint.sh"
 
-  test:image:
+  test:unit:image:
     desc: Build the interpreter image the unit suite runs in (cached by Docker)
     run: once
     cmds:
@@ -24,7 +24,7 @@ tasks:
 
   test:unit:
     desc: "Unit suite on dash, busybox sh and bash --posix, then the coverage gate. Filter: FILE=test/unit/lib.bats, LEGS='dash' (newline list)"
-    deps: [test:image]
+    deps: [test:unit:image]
     vars:
       FILE: '{{.FILE | default "test/unit"}}'
       LEGS: '{{.LEGS | default ""}}'
