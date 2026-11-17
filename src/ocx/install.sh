@@ -536,6 +536,22 @@ load_vendored_manifest() {
     verify_checksum "$1" "$ocxf_want"
 }
 
+# The reader below is raw text (first textual match, no JSON escapes). A manifest a JSON-aware checker
+# could read differently (any backslash, a repeated key in one row) is refused before anything is trusted.
+assert_plain_manifest() {
+    ocxf_msg="release manifest is not in the expected plain form"
+    ! grep -q '[\]' "$OCXF_MANIFEST" || err "$ocxf_msg" 4
+    ocxf_dup=$(manifest_leaves | awk '
+        {
+            n = split("version channel tag target filename sha256 url", keys, " ")
+            for (i = 1; i <= n; i++) {
+                c = gsub("\"" keys[i] "\"[ \t]*:", "&")
+                if (c > 1) { print keys[i]; exit }
+            }
+        }')
+    [ -z "$ocxf_dup" ] || err "$ocxf_msg" 4
+}
+
 resolve_manifest() {
     OCXF_MANIFEST=$OCXF_TMP/dist.json
     if [ -n "$OCXF_DIST_URL" ]; then
@@ -545,6 +561,7 @@ resolve_manifest() {
     else
         load_vendored_manifest "$OCXF_MANIFEST"
     fi
+    assert_plain_manifest
     OCXF_DIST_DIGEST=$(file_sha256 "$OCXF_MANIFEST")
 }
 

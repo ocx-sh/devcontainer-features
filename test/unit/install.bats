@@ -262,6 +262,42 @@ pm_stubs() {
     assert_output --partial "checksum mismatch"
 }
 
+# reseal <sed expression>: edit the bundled manifest and record the matching digest, so only the parser objects.
+reseal() {
+    sed -i "$1" "$SANDBOX/src/dist.json"
+    printf '%s  dist.json\n' "$(sha256sum "$SANDBOX/src/dist.json" | cut -d' ' -f1)" >"$SANDBOX/src/dist.json.sha256"
+}
+
+assert_plain_form_refused() {
+    inst
+    assert_failure 4
+    assert_output --partial "release manifest is not in the expected plain form"
+    run grep -c 'tar.gz' "$STUB_LOG"
+    assert_output 0
+    [ ! -e "$__OCXF_TESTING_ROOT/usr/local/bin/ocx" ]
+}
+
+@test "S8 an escaped duplicate url key exits 4 before any download" {
+    reseal 's#"url":"\([^"]*\)"#"url":"\1","\\u0075rl":"https://evil.test/x"#'
+    assert_plain_form_refused
+}
+
+@test "S8 a literal duplicate url key exits 4 before any download" {
+    reseal 's#"url":"\([^"]*\)"#"url":"\1","url":"https://evil.test/x"#'
+    assert_plain_form_refused
+}
+
+@test "S8 a duplicate sha256 key exits 4 before any download" {
+    reseal 's#"sha256":"\([0-9a-f]*\)"#"sha256":"\1","sha256":"\1"#'
+    assert_plain_form_refused
+}
+
+@test "S8 a backslash anywhere in a fetched manifest exits 4 before the archive download" {
+    sed 's#"channel":"stable"#"channel":"sta\\ble"#' "$SANDBOX/src/dist.json" >"$SANDBOX/bad.json"
+    serve https://setup.ocx.sh/dist.json "$SANDBOX/bad.json"
+    VERSION=latest assert_plain_form_refused
+}
+
 @test "bundled manifest tampered exits 4 and installs nothing" {
     printf ' ' >>"$SANDBOX/src/dist.json"
     inst
